@@ -166,7 +166,7 @@
      ============================================================ -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp }
+  import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, doc, updateDoc }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   // ▼▼▼ 여기를 콘솔 값으로 교체 ▼▼▼
@@ -187,6 +187,12 @@
 
     // 폰: 새 배송 요청을 클라우드에 생성 (앱이 '쓰는' 유일한 동작)
     window.cloudCreate = (d)=> addDoc(col, { ...d, createdAt: serverTimestamp() });
+
+    // 폰: 수령 확인 → 해당 배송에 state="COMPLETED" 쓰기 (code로 _docid 찾아서 갱신)
+    window.cloudComplete = (code)=>{
+      const d = (window.__deliveries||[]).find(x=>x.id===code);
+      if(d && d._docid) return updateDoc(doc(col, d._docid), { state:"COMPLETED", status:"done" });
+    };
 
     // 모두: 배송 목록 실시간 구독 → 두 폰·관제가 동시에 같은 화면
     onSnapshot(col, snap=>{
@@ -316,6 +322,7 @@
             <div class="ring"><svg viewBox="0 0 24 24" fill="none" stroke="#0FBF86" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg></div>
             <h2>적재함이 열렸어요</h2>
             <p>인증이 완료되어 잠금이 해제됐습니다.<br>물품을 꺼낸 뒤 덮개를 닫아 주세요.</p>
+            <button class="cta success" style="margin-top:18px" id="confirmBtn">수령 확인 완료</button>
           </div>
         </div>
 
@@ -528,6 +535,17 @@
   document.getElementById('resolveBtn').onclick=()=>{theft=false;weightVal.textContent='0 g';monitor.classList.remove('alert');weightVal.classList.remove('alert');intPill.textContent='정상';intPill.className='pill ok';state=4;renderTrack();};
   document.getElementById('gestureBtn').onclick=()=>{authMethod.textContent='제스처 (✌️ V)';state=3;renderTrack();};
 
+  // 수령 확인 완료 → state=COMPLETED (폰이 직접 쓰는 유일한 상태 갱신)
+  document.getElementById('confirmBtn').onclick=()=>{
+    if(window.cloudComplete){                 // 클라우드 모드: Firestore에 COMPLETED 쓰기
+      window.cloudComplete(activeTrackId);
+      toast('수령이 확인됐어요 ✅');
+    }else{                                     // 시뮬 모드: 로컬로 완료 처리
+      const d=deliveries.find(x=>x.id===activeTrackId); if(d){d.status='done';d.state='COMPLETED';}
+      state=4;renderTrack();renderHome();
+    }
+  };
+
   // init
   // ===== Firebase ↔ 화면 브리지 (시뮬 변수에 클라우드 데이터를 꽂는 곳) =====
   const SM={DEPART:0,NAVIGATING:1,ARRIVED:2,AUTHENTICATED:3,COMPLETED:4};
@@ -547,6 +565,7 @@
   // onSnapshot이 호출 → 목록 교체 + 홈/추적 동시 갱신 (모든 기기가 같은 화면)
   window.applySnapshot=(arr)=>{
     deliveries=arr;
+    window.__deliveries=arr;   // cloudComplete가 code→_docid 찾을 수 있게 노출
     renderHome();
     if(!document.getElementById('screenTrack').classList.contains('hidden')) syncCurrentDoc();
   };
