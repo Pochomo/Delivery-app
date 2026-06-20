@@ -320,8 +320,8 @@
         <div class="card hidden" id="cardUnlock">
           <div class="unlock-anim">
             <div class="ring"><svg viewBox="0 0 24 24" fill="none" stroke="#0FBF86" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg></div>
-            <h2>적재함이 열렸어요</h2>
-            <p>인증이 완료되어 잠금이 해제됐습니다.<br>물품을 꺼낸 뒤 덮개를 닫아 주세요.</p>
+            <h2 id="unlockH">적재함이 열렸어요</h2>
+            <p id="unlockP">인증이 완료되어 잠금이 해제됐습니다.<br>물품을 꺼낸 뒤 덮개를 닫아 주세요.</p>
             <button class="cta success" style="margin-top:18px" id="confirmBtn">수령 확인 완료</button>
           </div>
         </div>
@@ -518,6 +518,16 @@
     document.querySelectorAll('#screenTrack .step').forEach(s=>{const i=+s.dataset.s;s.classList.toggle('done',i<state);s.classList.toggle('active',i===state);});
     barFill.style.width=(state/4*100)+'%';
     show('cardQR',state===2);show('cardUnlock',state>=3&&!theft);show('cardMonitor',state>=3);show('cardReceipt',state===4&&!theft);show('cardTheft',theft);
+    // 수령 확인 버튼: 개방(3) 단계에서만 노출, 완료(4)되면 숨김
+    document.getElementById('confirmBtn').style.display = (state===3 && !theft) ? 'block' : 'none';
+    // 개방 카드 문구: 완료되면 완료 메시지로
+    if(state===4){
+      document.getElementById('unlockH').textContent='수령이 완료됐어요';
+      document.getElementById('unlockP').innerHTML='이용해 주셔서 감사합니다.';
+    }else{
+      document.getElementById('unlockH').textContent='적재함이 열렸어요';
+      document.getElementById('unlockP').innerHTML='인증이 완료되어 잠금이 해제됐습니다.<br>물품을 꺼낸 뒤 덮개를 닫아 주세요.';
+    }
     if(state===4){const n=new Date();recvTime.textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
       const d=deliveries.find(x=>x.id===activeTrackId);if(d)d.status='done';}
   }
