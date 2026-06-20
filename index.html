@@ -166,7 +166,7 @@
      ============================================================ -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, doc, updateDoc }
+  import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, doc, updateDoc, deleteDoc }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
   // ▼▼▼ 여기를 콘솔 값으로 교체 ▼▼▼
@@ -194,12 +194,19 @@
       if(d && d._docid) return updateDoc(doc(col, d._docid), { state:"COMPLETED", status:"done" });
     };
 
+    // 폰: 완료된 내역 전체 삭제 (Firestore 문서 제거)
+    window.cloudClearDone = async ()=>{
+      const done = (window.__deliveries||[]).filter(x=>x.status==='done' && x._docid);
+      for(const d of done){ try{ await deleteDoc(doc(col, d._docid)); }catch(e){} }
+      return done.length;
+    };
+
     // 모두: 배송 목록 실시간 구독 → 두 폰·관제가 동시에 같은 화면
     onSnapshot(col, snap=>{
       const arr = snap.docs.map(doc=>{
         const v = doc.data();
         return { id:v.code||doc.id, _docid:doc.id, item:v.item, ic:v.ic||'📦',
-                 from:v.from, to:v.to, status:v.status||'live',
+                 from:v.from||'—', to:v.to||'—', status:v.status||'live',
                  state:v.state, weight:v.weight, unlock:v.unlock, theft:v.theft,
                  time:v.time||'방금' };
       });
@@ -232,7 +239,7 @@
         <div class="tx"><div class="t">새 배송 요청</div><div class="s">물품을 어디든 보내세요</div></div>
       </div>
 
-      <div class="section-h"><span class="t">최근 내역</span><span class="a">전체</span></div>
+      <div class="section-h"><span class="t">최근 내역</span><span class="a" id="clearHistBtn" style="cursor:pointer">내역 삭제</span></div>
       <div id="histWrap"></div>
     </div>
 
@@ -580,6 +587,20 @@
     if(!document.getElementById('screenTrack').classList.contains('hidden')) syncCurrentDoc();
   };
   window.addEventListener('fb-ready',()=>toast('클라우드 연결됨 ✅'));
+
+  // 내역 삭제: 완료된 배송 비우기 (클라우드면 Firestore 삭제, 시뮬이면 로컬 제거)
+  document.getElementById('clearHistBtn').onclick=async ()=>{
+    const doneCount=deliveries.filter(d=>d.status==='done').length;
+    if(doneCount===0){ toast('삭제할 완료 내역이 없어요'); return; }
+    if(!confirm(`완료된 내역 ${doneCount}건을 삭제할까요?`)) return;
+    if(window.cloudClearDone){
+      const n=await window.cloudClearDone();
+      toast(`내역 ${n}건 삭제됨`);
+    }else{
+      deliveries=deliveries.filter(d=>d.status!=='done');
+      renderHome(); toast('내역을 삭제했어요');
+    }
+  };
 
   drawQR();renderTrack();renderHome();go('screenHome');
 </script>
