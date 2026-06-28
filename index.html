@@ -11,14 +11,12 @@
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:var(--font);background:radial-gradient(900px 500px at 50% -10%,#DCE4F5 0%,transparent 60%),var(--paper);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px 16px;color:var(--text);-webkit-font-smoothing:antialiased}
 
-  /* phone */
   .phone{width:380px;max-width:100%;background:var(--surface);border-radius:42px;box-shadow:0 40px 90px -30px rgba(16,20,28,.45),0 0 0 11px #0c0f15,0 0 0 13px #2a2f3a;overflow:hidden;position:relative;height:788px}
   .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:140px;height:26px;background:#0c0f15;border-radius:0 0 16px 16px;z-index:40}
   .viewport{height:100%;overflow-y:auto;overflow-x:hidden;padding-bottom:80px}
   .viewport::-webkit-scrollbar{width:0}
   .screen.hidden{display:none}
 
-  /* shared header */
   .topbar{display:flex;align-items:center;justify-content:space-between;padding:36px 22px 8px}
   .brand{display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:-.02em;font-size:16px}
   .logo{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--primary),#7AA0FF);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px}
@@ -29,7 +27,6 @@
   .backrow{display:flex;align-items:center;gap:10px;padding:34px 18px 6px}
   .backbtn{width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:#fff;font-size:17px;cursor:pointer;display:flex;align-items:center;justify-content:center}
 
-  /* ===== HERO tracker ===== */
   .hero{margin:6px 16px 0;background:var(--ink);border-radius:var(--radius);color:#fff;padding:22px 20px 18px;position:relative;overflow:hidden}
   .hero::after{content:"";position:absolute;inset:0;background:radial-gradient(420px 220px at 80% -20%,rgba(47,107,255,.40),transparent 60%);pointer-events:none}
   .hero .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#9AA6BE;font-weight:700}
@@ -102,7 +99,6 @@
   .dock-btns button:hover{background:#1f2533}
   .dock-btns button.warn{border-color:#5c2230;color:#ff8aa0;background:#231419}
 
-  /* ===== HOME ===== */
   .activecard{margin:6px 16px 0;background:var(--ink);border-radius:var(--radius);color:#fff;padding:18px 18px 16px;position:relative;overflow:hidden;cursor:pointer;transition:.15s}
   .activecard:active{transform:scale(.99)}
   .activecard::after{content:"";position:absolute;inset:0;background:radial-gradient(360px 180px at 90% -30%,rgba(47,107,255,.4),transparent 60%);pointer-events:none}
@@ -132,7 +128,6 @@
   .tag-done{font-size:10.5px;font-weight:700;color:#0a8f63;background:rgba(15,191,134,.13);padding:4px 9px;border-radius:999px}
   .tag-live{font-size:10.5px;font-weight:700;color:var(--amber);background:rgba(255,159,28,.14);padding:4px 9px;border-radius:999px}
 
-  /* ===== REQUEST FORM ===== */
   .field{padding:0 18px;margin-bottom:20px}
   .field .lbl{font-size:13px;font-weight:800;letter-spacing:-.01em;margin-bottom:11px}
   .chips{display:flex;flex-wrap:wrap;gap:8px}
@@ -146,11 +141,9 @@
   .summary{margin:0 18px 18px;background:#F6F8FC;border-radius:16px;padding:16px}
   .submitbar{padding:0 18px 8px}
 
-  /* toast */
   .toast{position:absolute;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-size:13px;font-weight:700;padding:13px 20px;border-radius:14px;opacity:0;transition:.35s;z-index:50;box-shadow:0 16px 40px -12px rgba(0,0,0,.5);pointer-events:none}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
-  /* tab bar */
   .tabbar{position:absolute;bottom:0;left:0;right:0;height:72px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-around;z-index:30;padding-bottom:6px}
   .tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;font-weight:700;color:var(--muted);cursor:pointer;background:none;border:none;font-family:var(--font);flex:1}
   .tab .ti{font-size:20px;line-height:1}
@@ -159,17 +152,12 @@
   .fab:active{transform:scale(.95)}
 </style>
 
-<!-- ============================================================
-     FIREBASE 실시간 연동 (직접 호스팅 시에만 동작 · claude.ai 미리보기에선
-     이 모듈이 차단되어 자동으로 '시뮬레이션 모드'로 떨어집니다)
-     ▸ Firebase 콘솔 > 프로젝트 설정 > '내 앱'의 firebaseConfig를 아래에 붙여넣기
-     ============================================================ -->
+<!-- Firebase 실시간 연동 -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
   import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, doc, updateDoc, deleteDoc }
     from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-  // ▼▼▼ 여기를 콘솔 값으로 교체 ▼▼▼
   const firebaseConfig = {
     apiKey:            "AIzaSyChX0eWL7EvDHn0SY2HeI1pY5rfwenQseo",
     authDomain:        "delivery-robot-c58f9.firebaseapp.com",
@@ -178,37 +166,44 @@
     messagingSenderId: "239772819704",
     appId:             "1:239772819704:web:05a11e499f50132882db0d"
   };
-  // ▲▲▲ 여기까지 ▲▲▲
 
   try{
     if(firebaseConfig.projectId.startsWith("PASTE")) throw new Error("config 미설정");
     const db  = getFirestore(initializeApp(firebaseConfig));
     const col = collection(db,'deliveries');
 
-    // 폰: 새 배송 요청을 클라우드에 생성 (앱이 '쓰는' 유일한 동작)
     window.cloudCreate = (d)=> addDoc(col, { ...d, createdAt: serverTimestamp() });
 
-    // 폰: 수령 확인 → 해당 배송에 state="COMPLETED" 쓰기 (code로 _docid 찾아서 갱신)
     window.cloudComplete = (code)=>{
       const d = (window.__deliveries||[]).find(x=>x.id===code);
       if(d && d._docid) return updateDoc(doc(col, d._docid), { state:"COMPLETED", status:"done" });
     };
 
-    // 폰: 완료된 내역 전체 삭제 (Firestore 문서 제거)
     window.cloudClearDone = async ()=>{
       const done = (window.__deliveries||[]).filter(x=>x.status==='done' && x._docid);
       for(const d of done){ try{ await deleteDoc(doc(col, d._docid)); }catch(e){} }
       return done.length;
     };
 
-    // 모두: 배송 목록 실시간 구독 → 두 폰·관제가 동시에 같은 화면
     onSnapshot(col, snap=>{
       const arr = snap.docs.map(doc=>{
         const v = doc.data();
-        return { id:v.code||doc.id, _docid:doc.id, item:v.item, ic:v.ic||'📦',
-                 from:v.from||'—', to:v.to||'—', status:v.status||'live',
-                 state:v.state, weight:v.weight, unlock:v.unlock, theft:v.theft,
-                 time:v.time||'방금' };
+        // ★ FIX 1: state===COMPLETED면 status 필드 없어도 완료로 취급 (깨진 문서 방어)
+        const st = (v.state==='COMPLETED') ? 'done' : (v.status||'live');
+        return {
+          id:     v.code||doc.id,
+          _docid: doc.id,
+          item:   v.item||'물품',
+          ic:     v.ic||'📦',
+          from:   v.from||'',       // ★ FIX 2: undefined 대신 빈 문자열로 (렌더에서 처리)
+          to:     v.to||'',
+          status: st,
+          state:  v.state,
+          weight: v.weight,
+          unlock: v.unlock,
+          theft:  v.theft,
+          time:   v.time||'방금'
+        };
       });
       window.applySnapshot && window.applySnapshot(arr);
     });
@@ -220,7 +215,7 @@
   <div class="notch"></div>
   <div class="viewport">
 
-    <!-- ============ HOME ============ -->
+    <!-- HOME -->
     <div class="screen" id="screenHome">
       <div class="topbar">
         <div class="brand"><span class="logo">🤖</span> 캠퍼스 배송</div>
@@ -243,7 +238,7 @@
       <div id="histWrap"></div>
     </div>
 
-    <!-- ============ REQUEST ============ -->
+    <!-- REQUEST -->
     <div class="screen hidden" id="screenRequest">
       <div class="backrow">
         <button class="backbtn" onclick="go('screenHome')">←</button>
@@ -291,7 +286,7 @@
       </div>
     </div>
 
-    <!-- ============ TRACK ============ -->
+    <!-- TRACK -->
     <div class="screen hidden" id="screenTrack">
       <div class="backrow">
         <button class="backbtn" onclick="go('screenHome')">←</button>
@@ -374,7 +369,6 @@
 
   <div class="toast" id="toast">로봇을 호출했어요 🚀</div>
 
-  <!-- tab bar -->
   <div class="tabbar">
     <button class="tab on" id="tabHome" onclick="go('screenHome')"><span class="ti">⌂</span>홈</button>
     <button class="fab" onclick="go('screenRequest')">＋</button>
@@ -385,7 +379,6 @@
 <script>
   const BUILDINGS=['학생회관','인하대학교 하이테크 센터','인하대학교 5호관(남)','인하대학교 5호관(북)','인하대학교 2호관'];
 
-  // delivery store
   let deliveries=[
     {id:'#A-2317',item:'행정 서류 봉투',ic:'📄',from:'인하대학교 5호관(남)',to:'인하대학교 하이테크 센터',status:'live',time:'방금'},
     {id:'#A-2298',item:'소형 택배',ic:'📦',from:'학생회관',to:'인하대학교 2호관',status:'done',time:'어제 14:20'},
@@ -393,7 +386,6 @@
   ];
   let activeTrackId='#A-2317';
 
-  // ---- nav ----
   function go(s){
     document.querySelectorAll('.screen').forEach(e=>e.classList.add('hidden'));
     document.getElementById(s).classList.remove('hidden');
@@ -403,15 +395,23 @@
     if(s==='screenHome')renderHome();
   }
 
-  // ---- HOME render ----
+  // ★ FIX 2: from/to 빈 값 처리 → 라우트 표시 안전하게
+  function routeText(from,to){
+    if(!from && !to) return '경로 정보 없음';
+    if(!from) return '? → '+to;
+    if(!to) return from+' → ?';
+    return from+' → '+to;
+  }
+
   function renderHome(){
+    // ★ FIX 1 효과: status='done'이 올바르게 들어오므로 live 판단 정확해짐
     const live=deliveries.find(d=>d.status==='live');
     const aw=document.getElementById('activeWrap');
     if(live){
       aw.innerHTML=`<div class="activecard" onclick="openTrack('${live.id}')">
-        <div class="ac-top"><div class="ac-live"><i></i>실시간 추적</div><div class="ac-eta">약 4분 뒤 도착</div></div>
+        <div class="ac-top"><div class="ac-live"><i></i>실시간 추적</div><div class="ac-eta" id="homeEta">약 -- 분 뒤 도착</div></div>
         <div class="ac-title">${live.ic} ${live.item}</div>
-        <div class="ac-route">${live.from} → ${live.to}</div>
+        <div class="ac-route">${routeText(live.from,live.to)}</div>
         <div class="ac-go">추적 화면 열기 →</div>
       </div>`;
     }else{
@@ -420,7 +420,7 @@
     document.getElementById('histWrap').innerHTML=deliveries.filter(d=>d.status==='done').map(d=>`
       <div class="histitem" onclick="openTrack('${d.id}')">
         <div class="ic">${d.ic}</div>
-        <div class="meta"><div class="t">${d.item}</div><div class="s">${d.from} → ${d.to} · ${d.time}</div></div>
+        <div class="meta"><div class="t">${d.item}</div><div class="s">${routeText(d.from,d.to)} · ${d.time}</div></div>
         <span class="tag-done">완료</span>
       </div>`).join('');
   }
@@ -428,15 +428,15 @@
   function openTrack(id){
     const d=deliveries.find(x=>x.id===id);activeTrackId=id;
     document.getElementById('orderBadge').textContent='배송 '+id;
-    document.getElementById('heroSub').textContent=d.from+' → '+d.to;
-    document.getElementById('recItem').textContent=d.item;
-    HERO[1].sub=d.from+' → '+d.to;
+    document.getElementById('heroSub').textContent=routeText(d.from,d.to);
+    document.getElementById('recItem').textContent=d.item||'물품';
+    HERO[1].sub=routeText(d.from,d.to);
     resetTrack();
-    if(window.cloudCreate) syncCurrentDoc();   // 클라우드 모드면 로봇 현재 상태로 동기화
+    if(window.cloudCreate) syncCurrentDoc();
     go('screenTrack');
   }
 
-  // ---- REQUEST ----
+  // REQUEST
   let req={item:null,from:null,to:null,recv:'self',name:''};
   function buildChips(wrap,key){
     document.getElementById(wrap).innerHTML=BUILDINGS.map(b=>`<button class="chip" data-v="${b}">${b}</button>`).join('');
@@ -466,28 +466,25 @@
     if(req.item&&req.from&&req.to){
       sm.style.display='block';
       document.getElementById('sumItem').textContent=req.item;
-      document.getElementById('sumRoute').textContent=req.from===req.to?'⚠ 출발·도착이 같아요':(req.from+' → '+req.to);
+      document.getElementById('sumRoute').textContent=req.from===req.to?'⚠ 출발·도착이 같아요':routeText(req.from,req.to);
       document.getElementById('sumRecv').textContent=req.recv==='self'?'본인 수령':(req.name||'다른 사람');
     }
   }
 
   function submitReq(){
     const n=Math.floor(2400+Math.random()*99);const id='#A-'+n;
-    HERO[1].sub=req.from+' → '+req.to;
+    HERO[1].sub=routeText(req.from,req.to);
     const payload={code:id,item:req.item,ic:req.ic||'📦',from:req.from,to:req.to,
                    recv:req.recv,name:req.name,status:'live',
                    state:'DEPART',weight:0,unlock:false,theft:false,time:'방금'};
 
     if(window.cloudCreate){
-      // 클라우드 모드: 문서만 생성 → onSnapshot이 모든 기기 화면을 갱신
       activeTrackId=id;
       window.cloudCreate(payload).catch(()=>toast('전송 실패 · 연결 확인'));
     }else{
-      // 시뮬레이션 모드(미리보기): 로컬 배열에 직접 추가
       deliveries.forEach(d=>{if(d.status==='live')d.status='done';});
       deliveries.unshift({id,...payload});
     }
-    // 폼 초기화
     req={item:null,from:null,to:null,recv:'self',name:''};
     document.querySelectorAll('.chip.on').forEach(c=>{if(!c.closest('#recvSeg'))c.classList.remove('on');});
     document.getElementById('summary').style.display='none';
@@ -499,7 +496,7 @@
 
   function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 
-  // ========== TRACK logic (from base) ==========
+  // TRACK
   function drawQR(){
     const N=25,cell=100/N,ns='http://www.w3.org/2000/svg';
     const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 100 100');
@@ -525,9 +522,7 @@
     document.querySelectorAll('#screenTrack .step').forEach(s=>{const i=+s.dataset.s;s.classList.toggle('done',i<state);s.classList.toggle('active',i===state);});
     barFill.style.width=(state/4*100)+'%';
     show('cardQR',state===2);show('cardUnlock',state>=3&&!theft);show('cardMonitor',state>=3);show('cardReceipt',state===4&&!theft);show('cardTheft',theft);
-    // 수령 확인 버튼: 개방(3) 단계에서만 노출, 완료(4)되면 숨김
-    document.getElementById('confirmBtn').style.display = (state===3 && !theft) ? 'block' : 'none';
-    // 개방 카드 문구: 완료되면 완료 메시지로
+    document.getElementById('confirmBtn').style.display=(state===3&&!theft)?'block':'none';
     if(state===4){
       document.getElementById('unlockH').textContent='수령이 완료됐어요';
       document.getElementById('unlockP').innerHTML='이용해 주셔서 감사합니다.';
@@ -543,7 +538,6 @@
 
   function resetTrack(){state=0;theft=false;weightVal.textContent='812 g';weightVal.classList.remove('alert');monitor.classList.remove('alert');intPill.textContent='정상';intPill.className='pill ok';authMethod.textContent='WeChat QR';drawQR();renderTrack();}
 
-  // shorthand element refs
   ['heroEye','heroTitle','heroSub','etaNum','etaLab','barFill','weightVal','monitor','intPill','authMethod','recvTime'].forEach(id=>window[id]=document.getElementById(id));
 
   document.getElementById('nextBtn').onclick=()=>{if(theft)return;if(state<4)state++;renderTrack();};
@@ -552,43 +546,50 @@
   document.getElementById('resolveBtn').onclick=()=>{theft=false;weightVal.textContent='0 g';monitor.classList.remove('alert');weightVal.classList.remove('alert');intPill.textContent='정상';intPill.className='pill ok';state=4;renderTrack();};
   document.getElementById('gestureBtn').onclick=()=>{authMethod.textContent='제스처 (✌️ V)';state=3;renderTrack();};
 
-  // 수령 확인 완료 → state=COMPLETED (폰이 직접 쓰는 유일한 상태 갱신)
   document.getElementById('confirmBtn').onclick=()=>{
-    if(window.cloudComplete){                 // 클라우드 모드: Firestore에 COMPLETED 쓰기
+    if(window.cloudComplete){
       window.cloudComplete(activeTrackId);
       toast('수령이 확인됐어요 ✅');
-    }else{                                     // 시뮬 모드: 로컬로 완료 처리
+    }else{
       const d=deliveries.find(x=>x.id===activeTrackId); if(d){d.status='done';d.state='COMPLETED';}
       state=4;renderTrack();renderHome();
     }
   };
 
-  // init
-  // ===== Firebase ↔ 화면 브리지 (시뮬 변수에 클라우드 데이터를 꽂는 곳) =====
+  // Firebase ↔ 화면 브리지
   const SM={DEPART:0,NAVIGATING:1,ARRIVED:2,AUTHENTICATED:3,COMPLETED:4};
 
-  // 현재 추적 중인 배송 문서의 상태를 화면에 반영 (로봇이 쓴 state/weight/unlock/theft)
+  // ETA를 로봇에서 받아서 홈 카드에도 표시
+  function applyEta(etaMin){
+    const el=document.getElementById('homeEta');
+    if(el){
+      if(etaMin===0||etaMin==='0') el.textContent='곧 도착';
+      else el.textContent='약 '+Math.round(etaMin)+' 분 뒤 도착';
+    }
+    etaNum.textContent=etaMin===0?'0':Math.round(etaMin);
+    etaLab.textContent=etaMin===0?'도착 완료':'분 뒤 도착';
+  }
+
   function syncCurrentDoc(){
     const cur=deliveries.find(x=>x.id===activeTrackId); if(!cur)return;
     if(cur.state in SM) state=SM[cur.state];
     if(cur.unlock && state<3) state=3;
     if(typeof cur.weight==='number') weightVal.textContent=Math.round(cur.weight)+' g';
+    if(typeof cur.eta==='number') applyEta(cur.eta);
     theft=!!cur.theft;
     if(theft){weightVal.textContent='0 g';weightVal.classList.add('alert');monitor.classList.add('alert');intPill.textContent='도난 의심';intPill.className='pill bad';}
     else{weightVal.classList.remove('alert');monitor.classList.remove('alert');intPill.textContent='정상';intPill.className='pill ok';}
     renderTrack();
   }
 
-  // onSnapshot이 호출 → 목록 교체 + 홈/추적 동시 갱신 (모든 기기가 같은 화면)
   window.applySnapshot=(arr)=>{
     deliveries=arr;
-    window.__deliveries=arr;   // cloudComplete가 code→_docid 찾을 수 있게 노출
+    window.__deliveries=arr;
     renderHome();
     if(!document.getElementById('screenTrack').classList.contains('hidden')) syncCurrentDoc();
   };
   window.addEventListener('fb-ready',()=>toast('클라우드 연결됨 ✅'));
 
-  // 내역 삭제: 완료된 배송 비우기 (클라우드면 Firestore 삭제, 시뮬이면 로컬 제거)
   document.getElementById('clearHistBtn').onclick=async ()=>{
     const doneCount=deliveries.filter(d=>d.status==='done').length;
     if(doneCount===0){ toast('삭제할 완료 내역이 없어요'); return; }
