@@ -9,7 +9,18 @@
     --font:'Pretendard',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic','Segoe UI',sans-serif;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:var(--font);background:radial-gradient(900px 500px at 50% -10%,#DCE4F5 0%,transparent 60%),var(--paper);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:28px 16px;color:var(--text);-webkit-font-smoothing:antialiased}
+  body{font-family:var(--font);background:radial-gradient(900px 500px at 50% -10%,#DCE4F5 0%,transparent 60%),var(--paper);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 16px;color:var(--text);-webkit-font-smoothing:antialiased}
+
+  /* 화면 밖 토글 바 */
+  .namebar{display:flex;align-items:center;gap:12px;margin-bottom:22px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 8px 7px 18px;box-shadow:0 12px 30px -18px rgba(16,20,28,.4)}
+  .namebar .nl{font-size:13px;font-weight:700;color:var(--muted);letter-spacing:-.01em}
+  .switch{position:relative;width:190px;height:38px;border-radius:999px;background:#EEF1F6;border:1px solid var(--line);cursor:pointer;user-select:none;flex-shrink:0}
+  .switch .knob{position:absolute;top:3px;left:3px;width:calc(50% - 3px);height:calc(100% - 6px);border-radius:999px;background:var(--primary);box-shadow:0 6px 14px -6px rgba(47,107,255,.8);transition:transform .22s cubic-bezier(.4,1.2,.5,1)}
+  .switch.alt .knob{transform:translateX(calc(100% + 0px))}
+  .switch .opts{position:absolute;inset:0;display:flex}
+  .switch .opts span{flex:1;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:800;letter-spacing:-.01em;color:var(--muted);z-index:2;transition:color .2s}
+  .switch:not(.alt) .opts span:first-child{color:#fff}
+  .switch.alt .opts span:last-child{color:#fff}
 
   .phone{width:380px;max-width:100%;background:var(--surface);border-radius:42px;box-shadow:0 40px 90px -30px rgba(16,20,28,.45),0 0 0 11px #0c0f15,0 0 0 13px #2a2f3a;overflow:hidden;position:relative;height:788px}
   .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:140px;height:26px;background:#0c0f15;border-radius:0 0 16px 16px;z-index:40}
@@ -152,6 +163,15 @@
   .fab:active{transform:scale(.95)}
 </style>
 
+<!-- 화면 밖 · 건물명 표시 전환 -->
+<div class="namebar">
+  <span class="nl">건물 이름</span>
+  <div class="switch" id="nameSwitch" onclick="toggleNames()">
+    <div class="knob"></div>
+    <div class="opts"><span>실제 이름</span><span>건물 A·B·C</span></div>
+  </div>
+</div>
+
 <!-- Firebase 실시간 연동 -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -188,14 +208,13 @@
     onSnapshot(col, snap=>{
       const arr = snap.docs.map(doc=>{
         const v = doc.data();
-        // ★ FIX 1: state===COMPLETED면 status 필드 없어도 완료로 취급 (깨진 문서 방어)
         const st = (v.state==='COMPLETED') ? 'done' : (v.status||'live');
         return {
           id:     v.code||doc.id,
           _docid: doc.id,
           item:   v.item||'물품',
           ic:     v.ic||'📦',
-          from:   v.from||'',       // ★ FIX 2: undefined 대신 빈 문자열로 (렌더에서 처리)
+          from:   v.from||'',
           to:     v.to||'',
           status: st,
           state:  v.state,
@@ -298,7 +317,7 @@
         <div class="eta"><div class="num" id="etaNum">4</div><div class="lab" id="etaLab">분 뒤 도착</div></div>
         <div class="eyebrow" id="heroEye">실시간 배송</div>
         <h1 id="heroTitle">로봇이 오는 중</h1>
-        <div class="sub" id="heroSub">인하대학교 5호관(남) → 인하대학교 하이테크 센터</div>
+        <div class="sub" id="heroSub"></div>
         <div class="steps">
           <div class="bar"></div><div class="bar-fill" id="barFill" style="width:0%"></div>
           <div class="step" data-s="0"><div class="dot"></div><div class="t">출발</div></div>
@@ -377,7 +396,27 @@
 </div>
 
 <script>
-  const BUILDINGS=['학생회관','인하대학교 하이테크 센터','인하대학교 5호관(남)','인하대학교 5호관(북)','인하대학교 2호관'];
+  /* ===== 건물명 매핑 (실제 이름 ↔ 건물 A~E) ===== */
+  const REAL_BUILDINGS=['학생회관','인하대학교 하이테크 센터','인하대학교 5호관(남)','인하대학교 5호관(북)','인하대학교 2호관'];
+  const ALIAS_BUILDINGS=['건물 A','건물 B','건물 C','건물 D','건물 E'];
+  const REAL2ALIAS={}; REAL_BUILDINGS.forEach((r,i)=>REAL2ALIAS[r]=ALIAS_BUILDINGS[i]);
+
+  let useAlias=false;                                   // false=실제 이름, true=건물 A·B·C
+  function BUILDINGS(){ return useAlias?ALIAS_BUILDINGS:REAL_BUILDINGS; }
+  // 저장은 항상 '실제 이름'으로. 화면에 그릴 때만 별칭으로 바꿔줌
+  function nm(v){ return (useAlias && REAL2ALIAS[v]) ? REAL2ALIAS[v] : (v||''); }
+
+  function toggleNames(){
+    useAlias=!useAlias;
+    document.getElementById('nameSwitch').classList.toggle('alt',useAlias);
+    rebuildChips();                                     // 요청 화면 칩 다시 그림 (선택 유지)
+    renderHome();                                       // 홈/내역 다시 그림
+    // 추적 화면 열려있으면 경로 문구 갱신
+    const d=deliveries.find(x=>x.id===activeTrackId);
+    if(d) document.getElementById('heroSub').textContent=routeText(d.from,d.to);
+    if(document.getElementById('summary').style.display==='block') validate();
+    toast(useAlias?'건물 A·B·C 표시로 전환':'실제 이름 표시로 전환');
+  }
 
   let deliveries=[
     {id:'#A-2317',item:'행정 서류 봉투',ic:'📄',from:'인하대학교 5호관(남)',to:'인하대학교 하이테크 센터',status:'live',time:'방금'},
@@ -395,16 +434,16 @@
     if(s==='screenHome')renderHome();
   }
 
-  // ★ FIX 2: from/to 빈 값 처리 → 라우트 표시 안전하게
+  // from/to 는 '실제 이름'으로 저장 → 표시 시 nm()으로 별칭 적용
   function routeText(from,to){
+    const f=nm(from), t=nm(to);
     if(!from && !to) return '경로 정보 없음';
-    if(!from) return '? → '+to;
-    if(!to) return from+' → ?';
-    return from+' → '+to;
+    if(!from) return '? → '+t;
+    if(!to) return f+' → ?';
+    return f+' → '+t;
   }
 
   function renderHome(){
-    // ★ FIX 1 효과: status='done'이 올바르게 들어오므로 live 판단 정확해짐
     const live=deliveries.find(d=>d.status==='live');
     const aw=document.getElementById('activeWrap');
     if(live){
@@ -436,16 +475,21 @@
     go('screenTrack');
   }
 
-  // REQUEST
+  // REQUEST — 선택값(req.from/to)은 '실제 이름'으로 저장, 라벨만 별칭
   let req={item:null,from:null,to:null,recv:'self',name:''};
   function buildChips(wrap,key){
-    document.getElementById(wrap).innerHTML=BUILDINGS.map(b=>`<button class="chip" data-v="${b}">${b}</button>`).join('');
-    document.querySelectorAll('#'+wrap+' .chip').forEach(c=>c.onclick=()=>{
-      document.querySelectorAll('#'+wrap+' .chip').forEach(x=>x.classList.remove('on'));
-      c.classList.add('on');req[key]=c.dataset.v;validate();
+    document.getElementById(wrap).innerHTML=REAL_BUILDINGS.map(b=>
+      `<button class="chip" data-v="${b}">${nm(b)}</button>`).join('');
+    document.querySelectorAll('#'+wrap+' .chip').forEach(c=>{
+      if(req[key]===c.dataset.v) c.classList.add('on');   // 전환 후에도 선택 유지
+      c.onclick=()=>{
+        document.querySelectorAll('#'+wrap+' .chip').forEach(x=>x.classList.remove('on'));
+        c.classList.add('on');req[key]=c.dataset.v;validate();
+      };
     });
   }
-  buildChips('fromChips','from');buildChips('toChips','to');
+  function rebuildChips(){ buildChips('fromChips','from'); buildChips('toChips','to'); }
+  rebuildChips();
 
   document.querySelectorAll('#itemChips .chip').forEach(c=>c.onclick=()=>{
     document.querySelectorAll('#itemChips .chip').forEach(x=>x.classList.remove('on'));
@@ -510,15 +554,20 @@
   let state=0,theft=false;
   const HERO={
     0:{eye:'실시간 배송',t:'로봇 출발 준비',sub:'적재 완료',eta:'5',lab:'분 뒤 출발'},
-    1:{eye:'실시간 배송',t:'로봇이 오는 중',sub:'인하대학교 5호관(남) → 인하대학교 하이테크 센터',eta:'4',lab:'분 뒤 도착'},
+    1:{eye:'실시간 배송',t:'로봇이 오는 중',sub:'',eta:'4',lab:'분 뒤 도착'},
     2:{eye:'도착',t:'QR을 보여주세요',sub:'로봇이 도착했습니다 · 인증 대기중',eta:'0',lab:'도착 완료'},
     3:{eye:'인증 완료',t:'적재함 개방',sub:'물품을 수령해 주세요',eta:'✓',lab:'인증됨'},
     4:{eye:'배송 완료',t:'수령이 완료됐어요',sub:'이용해 주셔서 감사합니다',eta:'✓',lab:'완료'}
   };
+  function heroSubFor(st){
+    // 이동중(1) 단계는 현재 배송의 경로를 그대로 사용 (별칭 반영)
+    if(st===1){ const d=deliveries.find(x=>x.id===activeTrackId); return d?routeText(d.from,d.to):HERO[1].sub; }
+    return HERO[st].sub;
+  }
   function show(id,on){const e=document.getElementById(id);e.classList.toggle('hidden',!on);if(on)e.classList.add('fade');}
   function renderTrack(){
     const h=HERO[state];
-    heroEye.textContent=h.eye;heroTitle.textContent=h.t;heroSub.textContent=h.sub;etaNum.textContent=h.eta;etaLab.textContent=h.lab;
+    heroEye.textContent=h.eye;heroTitle.textContent=h.t;heroSub.textContent=heroSubFor(state);etaNum.textContent=h.eta;etaLab.textContent=h.lab;
     document.querySelectorAll('#screenTrack .step').forEach(s=>{const i=+s.dataset.s;s.classList.toggle('done',i<state);s.classList.toggle('active',i===state);});
     barFill.style.width=(state/4*100)+'%';
     show('cardQR',state===2);show('cardUnlock',state>=3&&!theft);show('cardMonitor',state>=3);show('cardReceipt',state===4&&!theft);show('cardTheft',theft);
@@ -556,10 +605,8 @@
     }
   };
 
-  // Firebase ↔ 화면 브리지
   const SM={DEPART:0,NAVIGATING:1,ARRIVED:2,AUTHENTICATED:3,COMPLETED:4};
 
-  // ETA를 로봇에서 받아서 홈 카드에도 표시
   function applyEta(etaMin){
     const el=document.getElementById('homeEta');
     if(el){
