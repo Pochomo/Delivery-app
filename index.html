@@ -1,5 +1,9 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>캠퍼스 배송</title>
 <style>
   :root{
     --ink:#10141C;--ink-2:#1A2130;--paper:#EEF1F6;--surface:#FFFFFF;
@@ -11,8 +15,8 @@
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:var(--font);background:radial-gradient(900px 500px at 50% -10%,#DCE4F5 0%,transparent 60%),var(--paper);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px 16px;color:var(--text);-webkit-font-smoothing:antialiased}
 
-  /* 화면 밖 토글 바 */
-  .namebar{display:flex;align-items:center;gap:12px;margin-bottom:22px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 8px 7px 18px;box-shadow:0 12px 30px -18px rgba(16,20,28,.4)}
+  /* 화면 밖 컨트롤 바 */
+  .namebar{display:flex;align-items:center;gap:12px;margin-bottom:14px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:7px 8px 7px 18px;box-shadow:0 12px 30px -18px rgba(16,20,28,.4)}
   .namebar .nl{font-size:13px;font-weight:700;color:var(--muted);letter-spacing:-.01em}
   .switch{position:relative;width:190px;height:38px;border-radius:999px;background:#EEF1F6;border:1px solid var(--line);cursor:pointer;user-select:none;flex-shrink:0}
   .switch .knob{position:absolute;top:3px;left:3px;width:calc(50% - 3px);height:calc(100% - 6px);border-radius:999px;background:var(--primary);box-shadow:0 6px 14px -6px rgba(47,107,255,.8);transition:transform .22s cubic-bezier(.4,1.2,.5,1)}
@@ -21,6 +25,18 @@
   .switch .opts span{flex:1;display:flex;align-items:center;justify-content:center;font-size:12.5px;font-weight:800;letter-spacing:-.01em;color:var(--muted);z-index:2;transition:color .2s}
   .switch:not(.alt) .opts span:first-child{color:#fff}
   .switch.alt .opts span:last-child{color:#fff}
+
+  /* ★ 연결 상태 배지 — 문제 생기면 바로 보이게 */
+  .connbar{display:flex;align-items:center;gap:8px;margin-bottom:20px;font-size:12px;font-weight:700;
+           padding:8px 16px;border-radius:999px;border:1px solid var(--line);background:#fff;
+           box-shadow:0 12px 30px -18px rgba(16,20,28,.4);max-width:520px;text-align:center}
+  .connbar .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+  .connbar.wait  .dot{background:var(--amber);animation:pulse 1.4s infinite}
+  .connbar.ok    .dot{background:var(--success)}
+  .connbar.fail  .dot{background:var(--danger)}
+  .connbar.wait{color:#8a6100}
+  .connbar.ok{color:#0a8f63}
+  .connbar.fail{color:var(--danger);background:#FFF5F6;border-color:#FFD0D8}
 
   .phone{width:380px;max-width:100%;background:var(--surface);border-radius:42px;box-shadow:0 40px 90px -30px rgba(16,20,28,.45),0 0 0 11px #0c0f15,0 0 0 13px #2a2f3a;overflow:hidden;position:relative;height:788px}
   .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);width:140px;height:26px;background:#0c0f15;border-radius:0 0 16px 16px;z-index:40}
@@ -138,6 +154,7 @@
   .histitem .meta .s{font-size:11.5px;color:var(--muted);margin-top:2px}
   .tag-done{font-size:10.5px;font-weight:700;color:#0a8f63;background:rgba(15,191,134,.13);padding:4px 9px;border-radius:999px}
   .tag-live{font-size:10.5px;font-weight:700;color:var(--amber);background:rgba(255,159,28,.14);padding:4px 9px;border-radius:999px}
+  .tag-fail{font-size:10.5px;font-weight:700;color:var(--danger);background:rgba(255,59,92,.13);padding:4px 9px;border-radius:999px}
 
   .field{padding:0 18px;margin-bottom:20px}
   .field .lbl{font-size:13px;font-weight:800;letter-spacing:-.01em;margin-bottom:11px}
@@ -152,8 +169,9 @@
   .summary{margin:0 18px 18px;background:#F6F8FC;border-radius:16px;padding:16px}
   .submitbar{padding:0 18px 8px}
 
-  .toast{position:absolute;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-size:13px;font-weight:700;padding:13px 20px;border-radius:14px;opacity:0;transition:.35s;z-index:50;box-shadow:0 16px 40px -12px rgba(0,0,0,.5);pointer-events:none}
+  .toast{position:absolute;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-size:13px;font-weight:700;padding:13px 20px;border-radius:14px;opacity:0;transition:.35s;z-index:50;box-shadow:0 16px 40px -12px rgba(0,0,0,.5);pointer-events:none;max-width:88%;text-align:center;line-height:1.45}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .toast.err{background:var(--danger)}
 
   .tabbar{position:absolute;bottom:0;left:0;right:0;height:72px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-around;z-index:30;padding-bottom:6px}
   .tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;font-weight:700;color:var(--muted);cursor:pointer;background:none;border:none;font-family:var(--font);flex:1}
@@ -162,73 +180,22 @@
   .fab{width:54px;height:54px;border-radius:18px;background:var(--primary);color:#fff;border:none;font-size:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 10px 24px -8px rgba(47,107,255,.7);margin-top:-18px}
   .fab:active{transform:scale(.95)}
 </style>
+</head>
+<body>
 
 <!-- 화면 밖 · 건물명 표시 전환 -->
 <div class="namebar">
   <span class="nl">건물 이름</span>
-  <div class="switch" id="nameSwitch" onclick="toggleNames()">
+  <div class="switch" id="nameSwitch">
     <div class="knob"></div>
     <div class="opts"><span>실제 이름</span><span>건물 A·B·C</span></div>
   </div>
 </div>
 
-<!-- Firebase 실시간 연동 -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, doc, updateDoc, deleteDoc }
-    from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-  const firebaseConfig = {
-    apiKey:            "AIzaSyChX0eWL7EvDHn0SY2HeI1pY5rfwenQseo",
-    authDomain:        "delivery-robot-c58f9.firebaseapp.com",
-    projectId:         "delivery-robot-c58f9",
-    storageBucket:     "delivery-robot-c58f9.firebasestorage.app",
-    messagingSenderId: "239772819704",
-    appId:             "1:239772819704:web:05a11e499f50132882db0d"
-  };
-
-  try{
-    if(firebaseConfig.projectId.startsWith("PASTE")) throw new Error("config 미설정");
-    const db  = getFirestore(initializeApp(firebaseConfig));
-    const col = collection(db,'deliveries');
-
-    window.cloudCreate = (d)=> addDoc(col, { ...d, createdAt: serverTimestamp() });
-
-    window.cloudComplete = (code)=>{
-      const d = (window.__deliveries||[]).find(x=>x.id===code);
-      if(d && d._docid) return updateDoc(doc(col, d._docid), { state:"COMPLETED", status:"done" });
-    };
-
-    window.cloudClearDone = async ()=>{
-      const done = (window.__deliveries||[]).filter(x=>x.status==='done' && x._docid);
-      for(const d of done){ try{ await deleteDoc(doc(col, d._docid)); }catch(e){} }
-      return done.length;
-    };
-
-    onSnapshot(col, snap=>{
-      const arr = snap.docs.map(doc=>{
-        const v = doc.data();
-        const st = (v.state==='COMPLETED') ? 'done' : (v.status||'live');
-        return {
-          id:     v.code||doc.id,
-          _docid: doc.id,
-          item:   v.item||'물품',
-          ic:     v.ic||'📦',
-          from:   v.from||'',
-          to:     v.to||'',
-          status: st,
-          state:  v.state,
-          weight: v.weight,
-          unlock: v.unlock,
-          theft:  v.theft,
-          time:   v.time||'방금'
-        };
-      });
-      window.applySnapshot && window.applySnapshot(arr);
-    });
-    window.dispatchEvent(new Event('fb-ready'));
-  }catch(e){ console.warn('[Firebase 미연결] 시뮬레이션 모드로 동작합니다 →', e.message); }
-</script>
+<!-- ★ 연결 상태 — 실패 원인이 화면에 바로 뜨도록 -->
+<div class="connbar wait" id="connBar">
+  <span class="dot"></span><span id="connMsg">Firebase 연결 중…</span>
+</div>
 
 <div class="phone">
   <div class="notch"></div>
@@ -248,7 +215,7 @@
       <div class="section-h"><span class="t">진행 중인 배송</span></div>
       <div id="activeWrap"></div>
 
-      <div class="bigbtn" onclick="go('screenRequest')">
+      <div class="bigbtn" id="newReqBtn">
         <div class="ic">＋</div>
         <div class="tx"><div class="t">새 배송 요청</div><div class="s">물품을 어디든 보내세요</div></div>
       </div>
@@ -260,7 +227,7 @@
     <!-- REQUEST -->
     <div class="screen hidden" id="screenRequest">
       <div class="backrow">
-        <button class="backbtn" onclick="go('screenHome')">←</button>
+        <button class="backbtn" data-go="screenHome">←</button>
         <div><div style="font-size:19px;font-weight:800;letter-spacing:-.02em">새 배송 요청</div></div>
       </div>
 
@@ -301,20 +268,20 @@
       </div>
 
       <div class="submitbar">
-        <button class="cta primary" id="submitBtn" disabled onclick="submitReq()">로봇 호출하기</button>
+        <button class="cta primary" id="submitBtn" disabled>로봇 호출하기</button>
       </div>
     </div>
 
     <!-- TRACK -->
     <div class="screen hidden" id="screenTrack">
       <div class="backrow">
-        <button class="backbtn" onclick="go('screenHome')">←</button>
+        <button class="backbtn" data-go="screenHome">←</button>
         <div style="flex:1"><div style="font-size:18px;font-weight:800;letter-spacing:-.02em">배송 추적</div></div>
         <span class="badge" id="orderBadge">배송 #A-2317</span>
       </div>
 
       <div class="hero">
-        <div class="eta"><div class="num" id="etaNum">4</div><div class="lab" id="etaLab">분 뒤 도착</div></div>
+        <div class="eta"><div class="num" id="etaNum">-</div><div class="lab" id="etaLab">분 뒤 도착</div></div>
         <div class="eyebrow" id="heroEye">실시간 배송</div>
         <h1 id="heroTitle">로봇이 오는 중</h1>
         <div class="sub" id="heroSub"></div>
@@ -352,7 +319,7 @@
           <div class="monitor" id="monitor">
             <div class="m-left">
               <div class="ml">현재 적재 하중</div>
-              <div class="mv" id="weightVal">812 g</div>
+              <div class="mv" id="weightVal">-- g</div>
               <svg class="wave" id="wave" viewBox="0 0 78 34" preserveAspectRatio="none"></svg>
             </div>
             <span class="pill ok" id="intPill">정상</span>
@@ -361,9 +328,9 @@
 
         <div class="card hidden" id="cardReceipt">
           <div class="ttl">📦 수령 내역</div>
-          <div class="row"><span class="k">물품</span><span class="v" id="recItem">행정 서류 봉투</span></div>
+          <div class="row"><span class="k">물품</span><span class="v" id="recItem">-</span></div>
           <div class="row"><span class="k">인증 방식</span><span class="v" id="authMethod">WeChat QR</span></div>
-          <div class="row"><span class="k">배송 하중</span><span class="v">812 g (이상 없음)</span></div>
+          <div class="row"><span class="k">배송 하중</span><span class="v" id="recWeight">-</span></div>
           <div class="row"><span class="k">수령 시각</span><span class="v" id="recvTime">--:--</span></div>
         </div>
 
@@ -374,7 +341,7 @@
         </div>
 
         <div class="dock">
-          <div class="lab">시연 컨트롤 · 배송 단계를 넘겨보세요</div>
+          <div class="lab">시연 컨트롤 · 로컬 표시만 변경 (로봇 상태와 무관)</div>
           <div class="dock-btns">
             <button id="nextBtn">다음 단계 ▶</button>
             <button class="warn" id="theftBtn">도난 시뮬레이션</button>
@@ -386,269 +353,579 @@
 
   </div>
 
-  <div class="toast" id="toast">로봇을 호출했어요 🚀</div>
+  <div class="toast" id="toast"></div>
 
   <div class="tabbar">
-    <button class="tab on" id="tabHome" onclick="go('screenHome')"><span class="ti">⌂</span>홈</button>
-    <button class="fab" onclick="go('screenRequest')">＋</button>
-    <button class="tab" id="tabHist" onclick="go('screenHome')"><span class="ti">≣</span>내역</button>
+    <button class="tab on" id="tabHome" data-go="screenHome"><span class="ti">⌂</span>홈</button>
+    <button class="fab" data-go="screenRequest">＋</button>
+    <button class="tab" id="tabHist" data-go="screenHome"><span class="ti">≣</span>내역</button>
   </div>
 </div>
 
-<script>
-  /* ===== 건물명 매핑 (실제 이름 ↔ 건물 A~E) ===== */
-  const REAL_BUILDINGS=['학생회관','인하대학교 하이테크 센터','인하대학교 5호관(남)','인하대학교 5호관(북)','인하대학교 2호관'];
-  const ALIAS_BUILDINGS=['건물 A','건물 B','건물 C','건물 D','건물 E'];
-  const REAL2ALIAS={}; REAL_BUILDINGS.forEach((r,i)=>REAL2ALIAS[r]=ALIAS_BUILDINGS[i]);
+<!--
+  ══════════════════════════════════════════════════════════════
+  ★ 전체를 하나의 module 로 통합했다.
 
-  let useAlias=false;                                   // false=실제 이름, true=건물 A·B·C
-  function BUILDINGS(){ return useAlias?ALIAS_BUILDINGS:REAL_BUILDINGS; }
-  // 저장은 항상 '실제 이름'으로. 화면에 그릴 때만 별칭으로 바꿔줌
-  function nm(v){ return (useAlias && REAL2ALIAS[v]) ? REAL2ALIAS[v] : (v||''); }
+  기존 문제: Firebase 코드는 <script type="module">, UI 코드는 일반 <script>
+  였다. module 은 defer 처럼 동작해서 일반 script 보다 나중에 실행된다.
+  따라서 UI 가 window.cloudCreate 를 부를 때 그건 아직 undefined 였고,
+  모든 동작이 조용히 시뮬레이션 모드로 빠졌다.
+  ("새 요청 안 만들어짐 / 내역 삭제 안 됨 / 연동 안 됨" 이 전부 이 원인)
 
-  function toggleNames(){
-    useAlias=!useAlias;
-    document.getElementById('nameSwitch').classList.toggle('alt',useAlias);
-    rebuildChips();                                     // 요청 화면 칩 다시 그림 (선택 유지)
-    renderHome();                                       // 홈/내역 다시 그림
-    // 추적 화면 열려있으면 경로 문구 갱신
-    const d=deliveries.find(x=>x.id===activeTrackId);
-    if(d) document.getElementById('heroSub').textContent=routeText(d.from,d.to);
-    if(document.getElementById('summary').style.display==='block') validate();
-    toast(useAlias?'건물 A·B·C 표시로 전환':'실제 이름 표시로 전환');
+  이제 import 가 끝난 뒤 UI 를 초기화하므로 순서 문제가 없다.
+  ══════════════════════════════════════════════════════════════
+-->
+<script type="module">
+import { initializeApp }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp,
+         doc, updateDoc, deleteDoc, query, orderBy, limit }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+/* ══════════════════════════════════════════
+   설정
+   ══════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey:            "AIzaSyChX0eWL7EvDHn0SY2HeI1pY5rfwenQseo",
+  authDomain:        "delivery-robot-c58f9.firebaseapp.com",
+  projectId:         "delivery-robot-c58f9",
+  storageBucket:     "delivery-robot-c58f9.firebasestorage.app",
+  messagingSenderId: "239772819704",
+  appId:             "1:239772819704:web:05a11e499f50132882db0d"
+};
+
+// 무료(Spark) 플랜: 읽기 5만/일. 컬렉션 전체를 구독하면 과거 문서 변경까지
+// 전부 읽기로 잡히므로 최근 N건만 본다.
+const DOC_LIMIT = 15;
+
+const $  = id => document.getElementById(id);
+const $$ = sel => document.querySelectorAll(sel);
+
+/* ══════════════════════════════════════════
+   상태
+   ══════════════════════════════════════════ */
+const REAL_BUILDINGS = ['학생회관','인하대학교 하이테크 센터','인하대학교 5호관(남)',
+                        '인하대학교 5호관(북)','인하대학교 2호관'];
+const ALIAS_BUILDINGS = ['건물 A','건물 B','건물 C','건물 D','건물 E'];
+const REAL2ALIAS = {};
+REAL_BUILDINGS.forEach((r,i) => REAL2ALIAS[r] = ALIAS_BUILDINGS[i]);
+
+let useAlias      = false;
+let deliveries    = [];        // Firestore 스냅샷 결과 (연결 전엔 빈 배열)
+let activeDocId   = null;      // ★ 코드가 아니라 Firestore 문서 ID 로 추적
+let cloudReady    = false;
+let db = null, col = null;
+
+// 추적 화면 로컬 표시 상태 (시연 버튼용 — 클라우드 상태와 분리)
+let localStep = null;          // null 이면 클라우드 state 를 따름
+let localTheft = false;
+
+const SM = { DEPART:0, NAVIGATING:1, ARRIVED:2, AUTHENTICATED:3, COMPLETED:4,
+             PLANNING:0, FAILED:0, REJECTED:0 };
+
+const HERO = {
+  0:{eye:'실시간 배송',t:'로봇 출발 준비',    sub:'적재 완료',                       lab:'분 뒤 출발'},
+  1:{eye:'실시간 배송',t:'로봇이 오는 중',    sub:'',                                lab:'분 뒤 도착'},
+  2:{eye:'도착',      t:'QR을 보여주세요',   sub:'로봇이 도착했습니다 · 인증 대기중', lab:'도착 완료'},
+  3:{eye:'인증 완료',  t:'적재함 개방',       sub:'물품을 수령해 주세요',             lab:'인증됨'},
+  4:{eye:'배송 완료',  t:'수령이 완료됐어요', sub:'이용해 주셔서 감사합니다',         lab:'완료'}
+};
+
+/* ══════════════════════════════════════════
+   유틸
+   ══════════════════════════════════════════ */
+function nm(v){ return (useAlias && REAL2ALIAS[v]) ? REAL2ALIAS[v] : (v || ''); }
+
+function routeText(from,to){
+  const f = nm(from), t = nm(to);
+  if(!from && !to) return '경로 정보 없음';
+  if(!from) return '? → ' + t;
+  if(!to)   return f + ' → ?';
+  return f + ' → ' + t;
+}
+
+let toastTimer = null;
+function toast(msg, isErr=false){
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.toggle('err', isErr);
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), isErr ? 4200 : 2200);
+}
+
+function setConn(cls, msg){
+  const bar = $('connBar');
+  bar.className = 'connbar ' + cls;
+  $('connMsg').textContent = msg;
+}
+
+/* ══════════════════════════════════════════
+   Firebase 초기화
+   ══════════════════════════════════════════ */
+function initFirebase(){
+  try{
+    db  = getFirestore(initializeApp(firebaseConfig));
+    col = collection(db, 'deliveries');
+  }catch(e){
+    setConn('fail', 'Firebase 초기화 실패 — ' + e.message);
+    console.error('[Firebase] init 실패', e);
+    return;
   }
 
-  let deliveries=[
-    {id:'#A-2317',item:'행정 서류 봉투',ic:'📄',from:'인하대학교 5호관(남)',to:'인하대학교 하이테크 센터',status:'live',time:'방금'},
-    {id:'#A-2298',item:'소형 택배',ic:'📦',from:'학생회관',to:'인하대학교 2호관',status:'done',time:'어제 14:20'},
-    {id:'#A-2271',item:'실험 기자재',ic:'🔬',from:'인하대학교 5호관(북)',to:'인하대학교 5호관(남)',status:'done',time:'2일 전'},
-  ];
-  let activeTrackId='#A-2317';
-
-  function go(s){
-    document.querySelectorAll('.screen').forEach(e=>e.classList.add('hidden'));
-    document.getElementById(s).classList.remove('hidden');
-    document.querySelector('.viewport').scrollTop=0;
-    document.getElementById('tabHome').classList.toggle('on',s==='screenHome');
-    document.getElementById('tabHist').classList.toggle('on',s==='screenTrack');
-    if(s==='screenHome')renderHome();
+  // 최근 N건만 구독 (읽기 쿼터 절약)
+  let q;
+  try{
+    q = query(col, orderBy('createdAt','desc'), limit(DOC_LIMIT));
+  }catch(e){
+    q = col;   // orderBy 실패 시 폴백
   }
 
-  // from/to 는 '실제 이름'으로 저장 → 표시 시 nm()으로 별칭 적용
-  function routeText(from,to){
-    const f=nm(from), t=nm(to);
-    if(!from && !to) return '경로 정보 없음';
-    if(!from) return '? → '+t;
-    if(!to) return f+' → ?';
-    return f+' → '+t;
-  }
+  onSnapshot(q,
+    snap => {
+      cloudReady = true;
+      setConn('ok', `클라우드 연결됨 · 문서 ${snap.size}건`);
 
-  function renderHome(){
-    const live=deliveries.find(d=>d.status==='live');
-    const aw=document.getElementById('activeWrap');
-    if(live){
-      aw.innerHTML=`<div class="activecard" onclick="openTrack('${live.id}')">
-        <div class="ac-top"><div class="ac-live"><i></i>실시간 추적</div><div class="ac-eta" id="homeEta">약 -- 분 뒤 도착</div></div>
-        <div class="ac-title">${live.ic} ${live.item}</div>
-        <div class="ac-route">${routeText(live.from,live.to)}</div>
-        <div class="ac-go">추적 화면 열기 →</div>
-      </div>`;
-    }else{
-      aw.innerHTML=`<div style="margin:6px 16px 0;padding:26px;text-align:center;color:var(--muted);font-size:13px;background:#fff;border:1px solid var(--line);border-radius:22px">진행 중인 배송이 없어요.<br>아래에서 새로 요청해 보세요.</div>`;
+      deliveries = snap.docs.map(d => {
+        const v = d.data();
+        return {
+          docId : d.id,
+          code  : v.code || d.id,
+          item  : v.item || '물품',
+          ic    : v.ic   || '📦',
+          from  : v.from || '',
+          to    : v.to   || '',
+          state : v.state || 'DEPART',
+          eta   : v.eta,
+          weight: v.weight,
+          unlock: v.unlock,
+          theft : v.theft,
+          error : v.error,
+          time  : v.time || '방금'
+        };
+      });
+
+      // 진행 중 문서를 자동으로 활성 추적 대상으로
+      const live = deliveries.find(d => d.state !== 'COMPLETED');
+      if(!activeDocId || !deliveries.some(d => d.docId === activeDocId)){
+        activeDocId = live ? live.docId : null;
+      }
+
+      renderHome();
+      if(!$('screenTrack').classList.contains('hidden')) renderTrack();
+    },
+    err => {
+      // ★ 에러를 삼키지 않는다. 원인이 화면에 뜬다.
+      cloudReady = false;
+      console.error('[Firestore] onSnapshot 오류', err);
+      if(err.code === 'permission-denied'){
+        setConn('fail', '권한 거부 — Firestore 보안 규칙을 확인하세요');
+      }else if(err.code === 'failed-precondition'){
+        setConn('fail', '색인 필요 — 콘솔 링크로 색인 생성 (F12 확인)');
+      }else{
+        setConn('fail', 'Firestore 오류: ' + (err.code || err.message));
+      }
     }
-    document.getElementById('histWrap').innerHTML=deliveries.filter(d=>d.status==='done').map(d=>`
-      <div class="histitem" onclick="openTrack('${d.id}')">
-        <div class="ic">${d.ic}</div>
-        <div class="meta"><div class="t">${d.item}</div><div class="s">${routeText(d.from,d.to)} · ${d.time}</div></div>
-        <span class="tag-done">완료</span>
-      </div>`).join('');
+  );
+}
+
+/* ══════════════════════════════════════════
+   화면 전환
+   ══════════════════════════════════════════ */
+function go(s){
+  $$('.screen').forEach(e => e.classList.add('hidden'));
+  $(s).classList.remove('hidden');
+  document.querySelector('.viewport').scrollTop = 0;
+  $('tabHome').classList.toggle('on', s === 'screenHome');
+  $('tabHist').classList.toggle('on', s === 'screenTrack');
+  if(s === 'screenHome')  renderHome();
+  if(s === 'screenTrack') renderTrack();
+}
+
+/* ══════════════════════════════════════════
+   홈 렌더
+   ══════════════════════════════════════════ */
+function renderHome(){
+  const live = deliveries.find(d => d.state !== 'COMPLETED');
+  const aw   = $('activeWrap');
+
+  if(live){
+    const etaTxt = (typeof live.eta === 'number')
+      ? (live.eta <= 0.5 ? '곧 도착' : `약 ${Math.round(live.eta)}분 뒤 도착`)
+      : '경로 계산 중…';
+
+    aw.innerHTML = `<div class="activecard" data-open="${live.docId}">
+      <div class="ac-top"><div class="ac-live"><i></i>실시간 추적</div>
+        <div class="ac-eta">${etaTxt}</div></div>
+      <div class="ac-title">${live.ic} ${live.item}</div>
+      <div class="ac-route">${routeText(live.from, live.to)}</div>
+      <div class="ac-go">추적 화면 열기 →</div>
+    </div>`;
+  }else{
+    const msg = cloudReady
+      ? '진행 중인 배송이 없어요.<br>아래에서 새로 요청해 보세요.'
+      : '클라우드 연결을 기다리는 중…';
+    aw.innerHTML = `<div style="margin:6px 16px 0;padding:26px;text-align:center;
+      color:var(--muted);font-size:13px;background:#fff;border:1px solid var(--line);
+      border-radius:22px">${msg}</div>`;
   }
 
-  function openTrack(id){
-    const d=deliveries.find(x=>x.id===id);activeTrackId=id;
-    document.getElementById('orderBadge').textContent='배송 '+id;
-    document.getElementById('heroSub').textContent=routeText(d.from,d.to);
-    document.getElementById('recItem').textContent=d.item||'물품';
-    HERO[1].sub=routeText(d.from,d.to);
-    resetTrack();
-    if(window.cloudCreate) syncCurrentDoc();
-    go('screenTrack');
-  }
+  const done = deliveries.filter(d => d.state === 'COMPLETED');
+  $('histWrap').innerHTML = done.map(d => `
+    <div class="histitem" data-open="${d.docId}">
+      <div class="ic">${d.ic}</div>
+      <div class="meta"><div class="t">${d.item}</div>
+        <div class="s">${routeText(d.from, d.to)} · ${d.time}</div></div>
+      <span class="tag-done">완료</span>
+    </div>`).join('');
 
-  // REQUEST — 선택값(req.from/to)은 '실제 이름'으로 저장, 라벨만 별칭
-  let req={item:null,from:null,to:null,recv:'self',name:''};
-  function buildChips(wrap,key){
-    document.getElementById(wrap).innerHTML=REAL_BUILDINGS.map(b=>
-      `<button class="chip" data-v="${b}">${nm(b)}</button>`).join('');
-    document.querySelectorAll('#'+wrap+' .chip').forEach(c=>{
-      if(req[key]===c.dataset.v) c.classList.add('on');   // 전환 후에도 선택 유지
-      c.onclick=()=>{
-        document.querySelectorAll('#'+wrap+' .chip').forEach(x=>x.classList.remove('on'));
-        c.classList.add('on');req[key]=c.dataset.v;validate();
-      };
-    });
-  }
-  function rebuildChips(){ buildChips('fromChips','from'); buildChips('toChips','to'); }
-  rebuildChips();
+  // 실패/거절 건도 보여준다 (조용히 사라지면 원인을 못 찾는다)
+  const bad = deliveries.filter(d => d.state === 'FAILED' || d.state === 'REJECTED');
+  $('histWrap').innerHTML += bad.map(d => `
+    <div class="histitem" data-open="${d.docId}">
+      <div class="ic">⚠️</div>
+      <div class="meta"><div class="t">${d.item}</div>
+        <div class="s">${d.error || d.state}</div></div>
+      <span class="tag-fail">${d.state === 'REJECTED' ? '거절' : '실패'}</span>
+    </div>`).join('');
+}
 
-  document.querySelectorAll('#itemChips .chip').forEach(c=>c.onclick=()=>{
-    document.querySelectorAll('#itemChips .chip').forEach(x=>x.classList.remove('on'));
-    c.classList.add('on');req.item=c.dataset.v;req.ic=c.dataset.ic;validate();
+/* ══════════════════════════════════════════
+   배송 요청
+   ══════════════════════════════════════════ */
+let req = { item:null, ic:null, from:null, to:null, recv:'self', name:'' };
+
+function buildChips(wrapId, key){
+  $(wrapId).innerHTML = REAL_BUILDINGS
+    .map(b => `<button class="chip" data-v="${b}">${nm(b)}</button>`).join('');
+  $$('#' + wrapId + ' .chip').forEach(c => {
+    if(req[key] === c.dataset.v) c.classList.add('on');
+    c.onclick = () => {
+      $$('#' + wrapId + ' .chip').forEach(x => x.classList.remove('on'));
+      c.classList.add('on');
+      req[key] = c.dataset.v;
+      validate();
+    };
   });
-  document.querySelectorAll('#recvSeg .chip').forEach(c=>c.onclick=()=>{
-    document.querySelectorAll('#recvSeg .chip').forEach(x=>x.classList.remove('on'));
-    c.classList.add('on');req.recv=c.dataset.v;
-    document.getElementById('recvName').style.display=req.recv==='other'?'block':'none';
-    validate();
-  });
-  document.getElementById('recvName').oninput=e=>{req.name=e.target.value;validate();};
+}
+function rebuildChips(){ buildChips('fromChips','from'); buildChips('toChips','to'); }
 
-  function validate(){
-    const ok=req.item&&req.from&&req.to&&req.from!==req.to&&(req.recv==='self'||req.name.trim());
-    const btn=document.getElementById('submitBtn');btn.disabled=!ok;
-    const sm=document.getElementById('summary');
-    if(req.item&&req.from&&req.to){
-      sm.style.display='block';
-      document.getElementById('sumItem').textContent=req.item;
-      document.getElementById('sumRoute').textContent=req.from===req.to?'⚠ 출발·도착이 같아요':routeText(req.from,req.to);
-      document.getElementById('sumRecv').textContent=req.recv==='self'?'본인 수령':(req.name||'다른 사람');
-    }
+function validate(){
+  const ok = req.item && req.from && req.to && req.from !== req.to
+             && (req.recv === 'self' || req.name.trim());
+  $('submitBtn').disabled = !ok;
+
+  const sm = $('summary');
+  if(req.item && req.from && req.to){
+    sm.style.display = 'block';
+    $('sumItem').textContent  = req.item;
+    $('sumRoute').textContent = req.from === req.to
+      ? '⚠ 출발·도착이 같아요' : routeText(req.from, req.to);
+    $('sumRecv').textContent  = req.recv === 'self' ? '본인 수령' : (req.name || '다른 사람');
+  }
+}
+
+async function submitReq(){
+  if(!cloudReady){
+    toast('클라우드에 연결되지 않았어요.\n상단 상태 표시를 확인하세요.', true);
+    return;
   }
 
-  function submitReq(){
-    const n=Math.floor(2400+Math.random()*99);const id='#A-'+n;
-    HERO[1].sub=routeText(req.from,req.to);
-    const payload={code:id,item:req.item,ic:req.ic||'📦',from:req.from,to:req.to,
-                   recv:req.recv,name:req.name,status:'live',
-                   state:'DEPART',weight:0,unlock:false,theft:false,time:'방금'};
+  const btn = $('submitBtn');
+  btn.disabled = true;
+  btn.textContent = '요청 전송 중…';
 
-    if(window.cloudCreate){
-      activeTrackId=id;
-      window.cloudCreate(payload).catch(()=>toast('전송 실패 · 연결 확인'));
-    }else{
-      deliveries.forEach(d=>{if(d.status==='live')d.status='done';});
-      deliveries.unshift({id,...payload});
-    }
-    req={item:null,from:null,to:null,recv:'self',name:''};
-    document.querySelectorAll('.chip.on').forEach(c=>{if(!c.closest('#recvSeg'))c.classList.remove('on');});
-    document.getElementById('summary').style.display='none';
-    document.getElementById('submitBtn').disabled=true;
-    document.getElementById('recvName').style.display='none';document.getElementById('recvName').value='';
+  const code = '#A-' + Math.floor(2400 + Math.random() * 99);
+  const payload = {
+    code, item: req.item, ic: req.ic || '📦',
+    from: req.from, to: req.to,
+    recv: req.recv, name: req.name,
+    state: 'DEPART',            // ← 브릿지가 이걸 보고 경로 생성 시작
+    weight: 0, unlock: false, theft: false,
+    time: new Date().toLocaleTimeString('ko-KR',
+            { hour:'2-digit', minute:'2-digit' }),
+    createdAt: serverTimestamp()
+  };
+
+  try{
+    const ref = await addDoc(col, payload);
+    activeDocId = ref.id;
+
+    req = { item:null, ic:null, from:null, to:null, recv:'self', name:'' };
+    $$('.chip.on').forEach(c => { if(!c.closest('#recvSeg')) c.classList.remove('on'); });
+    $('summary').style.display = 'none';
+    $('recvName').style.display = 'none';
+    $('recvName').value = '';
+
     toast('로봇을 호출했어요 🚀');
     go('screenHome');
+  }catch(e){
+    console.error('[Firestore] addDoc 실패', e);
+    toast('전송 실패: ' + (e.code || e.message), true);
+  }finally{
+    btn.textContent = '로봇 호출하기';
+    validate();
   }
+}
 
-  function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+/* ══════════════════════════════════════════
+   추적 화면
+   ══════════════════════════════════════════ */
+function currentDoc(){
+  return deliveries.find(d => d.docId === activeDocId) || null;
+}
 
-  // TRACK
-  function drawQR(){
-    const N=25,cell=100/N,ns='http://www.w3.org/2000/svg';
-    const svg=document.createElementNS(ns,'svg');svg.setAttribute('viewBox','0 0 100 100');
-    const seed=[];for(let i=0;i<N*N;i++)seed.push(Math.random()>0.5);
-    function finder(x,y){for(let i=-1;i<8;i++)for(let j=-1;j<8;j++){const a=x+i,b=y+j;if(a<0||b<0||a>=N||b>=N)continue;const edge=(i>=0&&i<7&&j>=0&&j<7);const ring=edge&&(i===0||i===6||j===0||j===6);const core=(i>=2&&i<=4&&j>=2&&j<=4);seed[a*N+b]=ring||core;if(edge&&!ring&&!core)seed[a*N+b]=false;if(!edge)seed[a*N+b]=false;}}
-    finder(0,0);finder(0,N-7);finder(N-7,0);
-    for(let x=0;x<N;x++)for(let y=0;y<N;y++){if(!seed[x*N+y])continue;const r=document.createElementNS(ns,'rect');r.setAttribute('x',y*cell);r.setAttribute('y',x*cell);r.setAttribute('width',cell+0.4);r.setAttribute('height',cell+0.4);r.setAttribute('fill','#10141C');r.setAttribute('rx',cell*0.18);svg.appendChild(r);}
-    const q=document.getElementById('qr');q.innerHTML='';q.appendChild(svg);
-  }
-
-  let state=0,theft=false;
-  const HERO={
-    0:{eye:'실시간 배송',t:'로봇 출발 준비',sub:'적재 완료',eta:'5',lab:'분 뒤 출발'},
-    1:{eye:'실시간 배송',t:'로봇이 오는 중',sub:'',eta:'4',lab:'분 뒤 도착'},
-    2:{eye:'도착',t:'QR을 보여주세요',sub:'로봇이 도착했습니다 · 인증 대기중',eta:'0',lab:'도착 완료'},
-    3:{eye:'인증 완료',t:'적재함 개방',sub:'물품을 수령해 주세요',eta:'✓',lab:'인증됨'},
-    4:{eye:'배송 완료',t:'수령이 완료됐어요',sub:'이용해 주셔서 감사합니다',eta:'✓',lab:'완료'}
-  };
-  function heroSubFor(st){
-    // 이동중(1) 단계는 현재 배송의 경로를 그대로 사용 (별칭 반영)
-    if(st===1){ const d=deliveries.find(x=>x.id===activeTrackId); return d?routeText(d.from,d.to):HERO[1].sub; }
-    return HERO[st].sub;
-  }
-  function show(id,on){const e=document.getElementById(id);e.classList.toggle('hidden',!on);if(on)e.classList.add('fade');}
-  function renderTrack(){
-    const h=HERO[state];
-    heroEye.textContent=h.eye;heroTitle.textContent=h.t;heroSub.textContent=heroSubFor(state);etaNum.textContent=h.eta;etaLab.textContent=h.lab;
-    document.querySelectorAll('#screenTrack .step').forEach(s=>{const i=+s.dataset.s;s.classList.toggle('done',i<state);s.classList.toggle('active',i===state);});
-    barFill.style.width=(state/4*100)+'%';
-    show('cardQR',state===2);show('cardUnlock',state>=3&&!theft);show('cardMonitor',state>=3);show('cardReceipt',state===4&&!theft);show('cardTheft',theft);
-    document.getElementById('confirmBtn').style.display=(state===3&&!theft)?'block':'none';
-    if(state===4){
-      document.getElementById('unlockH').textContent='수령이 완료됐어요';
-      document.getElementById('unlockP').innerHTML='이용해 주셔서 감사합니다.';
-    }else{
-      document.getElementById('unlockH').textContent='적재함이 열렸어요';
-      document.getElementById('unlockP').innerHTML='인증이 완료되어 잠금이 해제됐습니다.<br>물품을 꺼낸 뒤 덮개를 닫아 주세요.';
+function drawQR(){
+  const N = 25, cell = 100 / N, ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '0 0 100 100');
+  const seed = [];
+  for(let i = 0; i < N * N; i++) seed.push(Math.random() > 0.5);
+  function finder(x, y){
+    for(let i = -1; i < 8; i++) for(let j = -1; j < 8; j++){
+      const a = x + i, b = y + j;
+      if(a < 0 || b < 0 || a >= N || b >= N) continue;
+      const edge = (i >= 0 && i < 7 && j >= 0 && j < 7);
+      const ring = edge && (i === 0 || i === 6 || j === 0 || j === 6);
+      const core = (i >= 2 && i <= 4 && j >= 2 && j <= 4);
+      seed[a * N + b] = ring || core;
+      if(edge && !ring && !core) seed[a * N + b] = false;
+      if(!edge) seed[a * N + b] = false;
     }
-    if(state===4){const n=new Date();recvTime.textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
-      const d=deliveries.find(x=>x.id===activeTrackId);if(d)d.status='done';}
   }
-  function drawWave(){const ns='http://www.w3.org/2000/svg',svg=document.getElementById('wave');let d='M0,17';for(let x=0;x<=78;x+=6){const y=17+Math.sin((x+Date.now()/220))*3;d+=` L${x},${y.toFixed(1)}`;}svg.innerHTML=`<path d="${d}" fill="none" stroke="${theft?'#FF3B5C':'#0FBF86'}" stroke-width="2" stroke-linecap="round"/>`;}
-  setInterval(()=>{if(state>=3)drawWave();},120);
+  finder(0, 0); finder(0, N - 7); finder(N - 7, 0);
+  for(let x = 0; x < N; x++) for(let y = 0; y < N; y++){
+    if(!seed[x * N + y]) continue;
+    const r = document.createElementNS(ns, 'rect');
+    r.setAttribute('x', y * cell); r.setAttribute('y', x * cell);
+    r.setAttribute('width', cell + 0.4); r.setAttribute('height', cell + 0.4);
+    r.setAttribute('fill', '#10141C'); r.setAttribute('rx', cell * 0.18);
+    svg.appendChild(r);
+  }
+  $('qr').innerHTML = '';
+  $('qr').appendChild(svg);
+}
 
-  function resetTrack(){state=0;theft=false;weightVal.textContent='812 g';weightVal.classList.remove('alert');monitor.classList.remove('alert');intPill.textContent='정상';intPill.className='pill ok';authMethod.textContent='WeChat QR';drawQR();renderTrack();}
+function show(id, on){
+  const e = $(id);
+  e.classList.toggle('hidden', !on);
+  if(on) e.classList.add('fade');
+}
 
-  ['heroEye','heroTitle','heroSub','etaNum','etaLab','barFill','weightVal','monitor','intPill','authMethod','recvTime'].forEach(id=>window[id]=document.getElementById(id));
+function renderTrack(){
+  const d = currentDoc();
 
-  document.getElementById('nextBtn').onclick=()=>{if(theft)return;if(state<4)state++;renderTrack();};
-  document.getElementById('theftBtn').onclick=()=>{if(state<3)state=3;theft=true;weightVal.textContent='0 g';weightVal.classList.add('alert');monitor.classList.add('alert');intPill.textContent='도난 의심';intPill.className='pill bad';renderTrack();};
-  document.getElementById('resetBtn').onclick=resetTrack;
-  document.getElementById('resolveBtn').onclick=()=>{theft=false;weightVal.textContent='0 g';monitor.classList.remove('alert');weightVal.classList.remove('alert');intPill.textContent='정상';intPill.className='pill ok';state=4;renderTrack();};
-  document.getElementById('gestureBtn').onclick=()=>{authMethod.textContent='제스처 (✌️ V)';state=3;renderTrack();};
+  // 로컬 시연 버튼이 눌렸으면 그 값을, 아니면 클라우드 상태를 따름
+  const step  = (localStep !== null) ? localStep
+              : (d ? (SM[d.state] ?? 0) : 0);
+  const theft = localTheft || !!(d && d.theft);
+  const h = HERO[step];
 
-  document.getElementById('confirmBtn').onclick=()=>{
-    if(window.cloudComplete){
-      window.cloudComplete(activeTrackId);
-      toast('수령이 확인됐어요 ✅');
-    }else{
-      const d=deliveries.find(x=>x.id===activeTrackId); if(d){d.status='done';d.state='COMPLETED';}
-      state=4;renderTrack();renderHome();
+  $('orderBadge').textContent = d ? '배송 ' + d.code : '배송 —';
+  $('heroEye').textContent   = h.eye;
+  $('heroTitle').textContent = h.t;
+  $('heroSub').textContent   = (step === 1 && d) ? routeText(d.from, d.to) : h.sub;
+  $('etaLab').textContent    = h.lab;
+
+  // ETA — 클라우드 값 우선
+  if(step >= 2){
+    $('etaNum').textContent = step === 2 ? '0' : '✓';
+  }else if(d && typeof d.eta === 'number'){
+    $('etaNum').textContent = Math.max(0, Math.round(d.eta));
+  }else{
+    $('etaNum').textContent = '-';
+  }
+
+  $$('#screenTrack .step').forEach(s => {
+    const i = +s.dataset.s;
+    s.classList.toggle('done',   i < step);
+    s.classList.toggle('active', i === step);
+  });
+  $('barFill').style.width = (step / 4 * 100) + '%';
+
+  show('cardQR',      step === 2);
+  show('cardUnlock',  step >= 3 && !theft);
+  show('cardMonitor', step >= 3);
+  show('cardReceipt', step === 4 && !theft);
+  show('cardTheft',   theft);
+  $('confirmBtn').style.display = (step === 3 && !theft) ? 'block' : 'none';
+
+  if(step === 4){
+    $('unlockH').textContent = '수령이 완료됐어요';
+    $('unlockP').innerHTML   = '이용해 주셔서 감사합니다.';
+  }else{
+    $('unlockH').textContent = '적재함이 열렸어요';
+    $('unlockP').innerHTML   = '인증이 완료되어 잠금이 해제됐습니다.<br>물품을 꺼낸 뒤 덮개를 닫아 주세요.';
+  }
+
+  // 하중 — 클라우드 값
+  const w = (d && typeof d.weight === 'number') ? Math.round(d.weight) : null;
+  $('weightVal').textContent = (w === null) ? '-- g' : w + ' g';
+  $('weightVal').classList.toggle('alert', theft);
+  $('monitor').classList.toggle('alert', theft);
+  $('intPill').textContent = theft ? '도난 의심' : '정상';
+  $('intPill').className   = theft ? 'pill bad' : 'pill ok';
+
+  $('recItem').textContent   = d ? d.item : '-';
+  $('recWeight').textContent = (w === null) ? '-' : `${w} g (이상 없음)`;
+  if(step === 4){
+    const n = new Date();
+    $('recvTime').textContent =
+      String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
+  }
+}
+
+function drawWave(){
+  const svg = $('wave');
+  if(!svg) return;
+  let p = 'M0,17';
+  for(let x = 0; x <= 78; x += 6){
+    const y = 17 + Math.sin((x + Date.now() / 220)) * 3;
+    p += ` L${x},${y.toFixed(1)}`;
+  }
+  const theft = localTheft || !!(currentDoc() && currentDoc().theft);
+  svg.innerHTML = `<path d="${p}" fill="none" stroke="${theft ? '#FF3B5C' : '#0FBF86'}"
+                    stroke-width="2" stroke-linecap="round"/>`;
+}
+
+/* ══════════════════════════════════════════
+   클라우드 쓰기
+   ══════════════════════════════════════════ */
+async function completeDelivery(){
+  const d = currentDoc();
+  if(!d){ toast('추적 중인 배송이 없어요', true); return; }
+  if(!cloudReady){ toast('클라우드 미연결', true); return; }
+
+  try{
+    await updateDoc(doc(col, d.docId), { state:'COMPLETED' });
+    localStep = null;                 // 로컬 오버라이드 해제 → 클라우드 상태 반영
+    toast('수령이 확인됐어요 ✅');
+  }catch(e){
+    console.error('[Firestore] 수령 확인 실패', e);
+    toast('수령 확인 실패: ' + (e.code || e.message), true);
+  }
+}
+
+async function clearHistory(){
+  if(!cloudReady){ toast('클라우드 미연결', true); return; }
+
+  const done = deliveries.filter(d =>
+    d.state === 'COMPLETED' || d.state === 'FAILED' || d.state === 'REJECTED');
+
+  if(done.length === 0){ toast('삭제할 내역이 없어요'); return; }
+  if(!confirm(`완료·실패 내역 ${done.length}건을 삭제할까요?`)) return;
+
+  let ok = 0, fail = 0;
+  // ★ Promise.allSettled — 하나가 실패해도 나머지는 진행
+  const results = await Promise.allSettled(
+    done.map(d => deleteDoc(doc(col, d.docId)))
+  );
+  results.forEach(r => r.status === 'fulfilled' ? ok++ : fail++);
+
+  if(fail === 0){
+    toast(`내역 ${ok}건 삭제됨`);
+  }else{
+    console.error('[Firestore] 일부 삭제 실패', results.filter(r => r.status === 'rejected'));
+    toast(`${ok}건 삭제 · ${fail}건 실패 (F12 확인)`, true);
+  }
+}
+
+/* ══════════════════════════════════════════
+   이벤트 바인딩
+   ══════════════════════════════════════════ */
+function bindEvents(){
+  // 화면 전환 (data-go 속성 위임)
+  document.body.addEventListener('click', e => {
+    const goBtn = e.target.closest('[data-go]');
+    if(goBtn){ go(goBtn.dataset.go); return; }
+
+    const openBtn = e.target.closest('[data-open]');
+    if(openBtn){
+      activeDocId = openBtn.dataset.open;
+      localStep = null; localTheft = false;
+      drawQR();
+      go('screenTrack');
     }
-  };
+  });
 
-  const SM={DEPART:0,NAVIGATING:1,ARRIVED:2,AUTHENTICATED:3,COMPLETED:4};
+  $('newReqBtn').onclick = () => go('screenRequest');
 
-  function applyEta(etaMin){
-    const el=document.getElementById('homeEta');
-    if(el){
-      if(etaMin===0||etaMin==='0') el.textContent='곧 도착';
-      else el.textContent='약 '+Math.round(etaMin)+' 분 뒤 도착';
-    }
-    etaNum.textContent=etaMin===0?'0':Math.round(etaMin);
-    etaLab.textContent=etaMin===0?'도착 완료':'분 뒤 도착';
-  }
-
-  function syncCurrentDoc(){
-    const cur=deliveries.find(x=>x.id===activeTrackId); if(!cur)return;
-    if(cur.state in SM) state=SM[cur.state];
-    if(cur.unlock && state<3) state=3;
-    if(typeof cur.weight==='number') weightVal.textContent=Math.round(cur.weight)+' g';
-    if(typeof cur.eta==='number') applyEta(cur.eta);
-    theft=!!cur.theft;
-    if(theft){weightVal.textContent='0 g';weightVal.classList.add('alert');monitor.classList.add('alert');intPill.textContent='도난 의심';intPill.className='pill bad';}
-    else{weightVal.classList.remove('alert');monitor.classList.remove('alert');intPill.textContent='정상';intPill.className='pill ok';}
-    renderTrack();
-  }
-
-  window.applySnapshot=(arr)=>{
-    deliveries=arr;
-    window.__deliveries=arr;
+  // 건물명 토글
+  $('nameSwitch').onclick = () => {
+    useAlias = !useAlias;
+    $('nameSwitch').classList.toggle('alt', useAlias);
+    rebuildChips();
     renderHome();
-    if(!document.getElementById('screenTrack').classList.contains('hidden')) syncCurrentDoc();
-  };
-  window.addEventListener('fb-ready',()=>toast('클라우드 연결됨 ✅'));
-
-  document.getElementById('clearHistBtn').onclick=async ()=>{
-    const doneCount=deliveries.filter(d=>d.status==='done').length;
-    if(doneCount===0){ toast('삭제할 완료 내역이 없어요'); return; }
-    if(!confirm(`완료된 내역 ${doneCount}건을 삭제할까요?`)) return;
-    if(window.cloudClearDone){
-      const n=await window.cloudClearDone();
-      toast(`내역 ${n}건 삭제됨`);
-    }else{
-      deliveries=deliveries.filter(d=>d.status!=='done');
-      renderHome(); toast('내역을 삭제했어요');
-    }
+    if(!$('screenTrack').classList.contains('hidden')) renderTrack();
+    if($('summary').style.display === 'block') validate();
+    toast(useAlias ? '건물 A·B·C 표시로 전환' : '실제 이름 표시로 전환');
   };
 
-  drawQR();renderTrack();renderHome();go('screenHome');
+  // 요청 폼
+  $$('#itemChips .chip').forEach(c => c.onclick = () => {
+    $$('#itemChips .chip').forEach(x => x.classList.remove('on'));
+    c.classList.add('on');
+    req.item = c.dataset.v; req.ic = c.dataset.ic;
+    validate();
+  });
+
+  $$('#recvSeg .chip').forEach(c => c.onclick = () => {
+    $$('#recvSeg .chip').forEach(x => x.classList.remove('on'));
+    c.classList.add('on');
+    req.recv = c.dataset.v;
+    $('recvName').style.display = (req.recv === 'other') ? 'block' : 'none';
+    validate();
+  });
+
+  $('recvName').oninput = e => { req.name = e.target.value; validate(); };
+  $('submitBtn').onclick = submitReq;
+
+  // 추적 화면
+  $('confirmBtn').onclick  = completeDelivery;
+  $('clearHistBtn').onclick = clearHistory;
+
+  $('gestureBtn').onclick = () => {
+    $('authMethod').textContent = '제스처 (✌️ V)';
+    localStep = 3; renderTrack();
+  };
+
+  // 시연 컨트롤 — 로컬 표시만 변경
+  $('nextBtn').onclick = () => {
+    const d = currentDoc();
+    const cur = (localStep !== null) ? localStep : (d ? (SM[d.state] ?? 0) : 0);
+    if(cur < 4) localStep = cur + 1;
+    renderTrack();
+  };
+  $('theftBtn').onclick = () => {
+    if(localStep === null || localStep < 3) localStep = 3;
+    localTheft = true; renderTrack();
+  };
+  $('resetBtn').onclick = () => {
+    localStep = null; localTheft = false;
+    drawQR(); renderTrack();
+  };
+  $('resolveBtn').onclick = () => {
+    localTheft = false; localStep = 4; renderTrack();
+  };
+}
+
+/* ══════════════════════════════════════════
+   시작 — import 완료 후이므로 순서 문제 없음
+   ══════════════════════════════════════════ */
+rebuildChips();
+bindEvents();
+drawQR();
+renderHome();
+go('screenHome');
+setInterval(drawWave, 120);
+initFirebase();
+
+// 15초 내 연결 안 되면 안내
+setTimeout(() => {
+  if(!cloudReady && !$('connBar').classList.contains('fail')){
+    setConn('fail', '연결 지연 — 네트워크 / Firestore 활성화 여부 확인 (F12)');
+  }
+}, 15000);
 </script>
+</body>
+</html>
