@@ -802,6 +802,24 @@ let map = null, routeLine = null, robotMk = null, startMk = null, destMk = null;
 let mapRouteId = null;     // 폴리라인은 배송 건당 1회만 그림
 let mapHidden  = true;     // invalidateSize 게이트
 let animRAF = 0, demoTimer = 0, lastPosKey = '';
+let baseTiles = null, tileAlias = null;   // 현재 타일 레이어와 그 모드
+
+/* 건물명 익명화 토글과 연동 —
+   실제 이름 모드: OSM (건물·도로명 표시)
+   건물 A·B·C 모드: CARTO nolabels (글자가 아예 없는 타일) */
+function setTiles(){
+  if(!map || tileAlias === useAlias) return;
+  tileAlias = useAlias;
+  if(baseTiles) baseTiles.remove();
+  baseTiles = useAlias
+    ? L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png',
+        { maxZoom: 19, subdomains: 'abcd',
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>' })
+    : L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+        { maxZoom: 19,
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>' });
+  baseTiles.addTo(map);
+}
 
 function decodeRoute(flat){
   if(!Array.isArray(flat) || flat.length < 4) return null;
@@ -811,13 +829,10 @@ function decodeRoute(flat){
 }
 
 function ensureMap(){
-  if(map) return true;
+  if(map){ setTiles(); return true; }
   if(typeof L === 'undefined') return false;   // CDN 로드 실패 시 조용히 스킵
   map = L.map('map', { zoomControl:false });
-  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
-  }).addTo(map);
+  setTiles();
   map.setView([37.4491, 126.6562], 17);        // 인하대 캠퍼스
   $('mapRecenter').onclick = fitRoute;
   return true;
