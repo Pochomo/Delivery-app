@@ -4,6 +4,13 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>캠퍼스 배송</title>
+
+<!-- ★ 실시간 지도 (Leaflet + OpenStreetMap — 키·도메인 등록 불필요) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
 <style>
   :root{
     --ink:#10141C;--ink-2:#1A2130;--paper:#EEF1F6;--surface:#FFFFFF;
@@ -116,6 +123,36 @@
   .pill.ok{background:rgba(15,191,134,.14);color:#0a8f63}
   .pill.bad{background:rgba(255,59,92,.16);color:var(--danger)}
   .wave{height:34px;width:78px;margin-top:6px}
+
+  /* ── 실시간 지도 (배민식 추적) ─────────────────── */
+  .mapcard{padding:0!important;overflow:hidden;position:relative}
+  #map{width:100%;height:250px;background:#E8ECF3;z-index:1}
+  .leaflet-container{font-family:var(--font)}
+  .map-live{position:absolute;top:12px;left:12px;z-index:500;display:flex;align-items:center;gap:6px;
+            background:rgba(16,20,28,.85);backdrop-filter:blur(6px);color:#fff;
+            font-size:10.5px;font-weight:800;letter-spacing:.06em;padding:6px 11px;border-radius:999px}
+  .map-live i{width:6px;height:6px;border-radius:50%;background:var(--amber);animation:pulse 1.4s infinite}
+  .map-recenter{position:absolute;bottom:12px;right:12px;z-index:500;width:36px;height:36px;
+                border-radius:12px;border:1px solid var(--line);background:#fff;cursor:pointer;
+                font-size:17px;display:flex;align-items:center;justify-content:center;
+                box-shadow:0 6px 16px -6px rgba(16,20,28,.35)}
+  .map-recenter:active{transform:scale(.93)}
+  /* 로봇 마커 — 펄스 링 + 헤딩 화살표 (Leaflet divIcon 내부) */
+  .rm{position:relative;width:42px;height:42px;will-change:transform}
+  .rm .ring{position:absolute;inset:0;border-radius:50%;background:rgba(47,107,255,.30);animation:rmpulse 1.7s ease-out infinite}
+  .rm .core{position:absolute;inset:7px;border-radius:50%;background:var(--primary);border:2.5px solid #fff;
+            display:flex;align-items:center;justify-content:center;font-size:14px;
+            box-shadow:0 5px 12px -3px rgba(47,107,255,.65)}
+  .rm .dir{position:absolute;left:50%;top:-4px;margin-left:-6px;width:0;height:0;
+           border-left:6px solid transparent;border-right:6px solid transparent;
+           border-bottom:10px solid var(--primary);filter:drop-shadow(0 1px 2px rgba(0,0,0,.25))}
+  @keyframes rmpulse{0%{transform:scale(.55);opacity:.9}100%{transform:scale(1.5);opacity:0}}
+  /* 출발/도착 핀 */
+  .pin{display:flex;flex-direction:column;align-items:center;width:max-content;transform:translateX(calc(-50% + 13px))}
+  .pin .pb{font-size:10px;font-weight:800;color:#fff;background:var(--ink);padding:4px 9px;border-radius:8px;white-space:nowrap;box-shadow:0 4px 10px -3px rgba(0,0,0,.4)}
+  .pin .pt{width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid var(--ink)}
+  .pin.dest .pb{background:var(--danger)}
+  .pin.dest .pt{border-top-color:var(--danger)}
 
   .row{display:flex;justify-content:space-between;font-size:13.5px;padding:9px 0;border-bottom:1px dashed var(--line)}
   .row:last-child{border-bottom:none}.row .k{color:var(--muted)}.row .v{font-weight:700}
@@ -317,6 +354,13 @@
       </div>
 
       <div class="body">
+        <!-- ★ 실시간 지도 — route/pos 필드가 있을 때만 표시 -->
+        <div class="card mapcard hidden" id="cardMap">
+          <div id="map"></div>
+          <div class="map-live"><i></i>LIVE</div>
+          <button class="map-recenter" id="mapRecenter" title="경로 전체 보기">⌖</button>
+        </div>
+
         <div class="card hidden" id="cardQR">
           <div class="ttl">🔐 1차 인증 · QR 코드</div>
           <div class="qrwrap">
@@ -528,6 +572,8 @@ function initFirebase(){
           unlock: v.unlock,
           theft : v.theft,
           error : v.error,
+          pos   : v.pos,      // {lat,lng,hdg} — 로봇 실시간 위치
+          route : v.route,    // [lat,lng,...] 평탄 배열 — 주행 경로
           time  : v.time || '방금'
         };
       });
@@ -562,6 +608,7 @@ function initFirebase(){
    화면 전환
    ══════════════════════════════════════════ */
 function go(s){
+  if(s !== 'screenTrack') stopDemo();   // 추적 화면 이탈 시 가상 주행 정지
   $$('.screen').forEach(e => e.classList.add('hidden'));
   $(s).classList.remove('hidden');
   document.querySelector('.viewport').scrollTop = 0;
@@ -741,6 +788,130 @@ function show(id, on){
   if(on) e.classList.add('fade');
 }
 
+/* ══════════════════════════════════════════
+   ★ 실시간 지도 (Leaflet + OSM)
+
+   데이터 흐름: firebase_bridge.py 가 doc 에
+     route: [lat,lng,lat,lng,...]  경로 생성 시 1회
+     pos:   {lat,lng,hdg}          2초 간격·3m 이동 시
+   를 써 주면, 이미 걸려 있는 onSnapshot 이 밀어준다.
+   위치 업데이트가 2~3초 간격이므로 마커는 그 사이를
+   lerp 보간해서 배민처럼 미끄러지듯 움직인다.
+   ══════════════════════════════════════════ */
+let map = null, routeLine = null, robotMk = null, startMk = null, destMk = null;
+let mapRouteId = null;     // 폴리라인은 배송 건당 1회만 그림
+let mapHidden  = true;     // invalidateSize 게이트
+let animRAF = 0, demoTimer = 0, lastPosKey = '';
+
+function decodeRoute(flat){
+  if(!Array.isArray(flat) || flat.length < 4) return null;
+  const pts = [];
+  for(let i = 0; i + 1 < flat.length; i += 2) pts.push([flat[i], flat[i+1]]);
+  return pts;
+}
+
+function ensureMap(){
+  if(map) return true;
+  if(typeof L === 'undefined') return false;   // CDN 로드 실패 시 조용히 스킵
+  map = L.map('map', { zoomControl:false });
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
+  }).addTo(map);
+  map.setView([37.4491, 126.6562], 17);        // 인하대 캠퍼스
+  $('mapRecenter').onclick = fitRoute;
+  return true;
+}
+
+function pinIcon(label, dest){
+  return L.divIcon({ className:'', iconSize:[26,26], iconAnchor:[13,26],
+    html:`<div class="pin${dest ? ' dest' : ''}"><div class="pb">${label}</div><div class="pt"></div></div>` });
+}
+
+function robotIcon(){
+  return L.divIcon({ className:'', iconSize:[42,42], iconAnchor:[21,21],
+    html:'<div class="rm"><div class="ring"></div><div class="dir"></div><div class="core">🤖</div></div>' });
+}
+
+/* hdg: 도 단위, ENU(East=0, 반시계) → CSS 회전은 북쪽 기준 시계방향 */
+function setRobot(lat, lng, hdg, instant){
+  if(!robotMk){
+    robotMk = L.marker([lat, lng], { icon: robotIcon(), zIndexOffset: 1000 }).addTo(map);
+    instant = true;
+  }
+  const el = robotMk.getElement() && robotMk.getElement().querySelector('.rm');
+  if(el && typeof hdg === 'number') el.style.transform = `rotate(${90 - hdg}deg)`;
+
+  cancelAnimationFrame(animRAF);
+  if(instant){ robotMk.setLatLng([lat, lng]); return; }
+
+  const from = robotMk.getLatLng(), t0 = performance.now(), dur = 1600;
+  const stepFn = t => {
+    const k = Math.min(1, (t - t0) / dur), e = 1 - (1 - k) * (1 - k);   // easeOut
+    robotMk.setLatLng([from.lat + (lat - from.lat) * e,
+                       from.lng + (lng - from.lng) * e]);
+    if(k < 1) animRAF = requestAnimationFrame(stepFn);
+  };
+  animRAF = requestAnimationFrame(stepFn);
+}
+
+function fitRoute(){
+  if(!map) return;
+  if(routeLine)     map.fitBounds(routeLine.getBounds(), { padding:[34,34] });
+  else if(robotMk)  map.setView(robotMk.getLatLng(), 17);
+}
+
+function stopDemo(){ clearInterval(demoTimer); demoTimer = 0; }
+
+/* 시연 컨트롤용 — 실측 pos 가 없을 때 경로를 따라 가상 주행 */
+function startDemo(pts){
+  stopDemo();
+  let i = 0;
+  demoTimer = setInterval(() => {
+    const p = pts[i], n = pts[Math.min(i + 1, pts.length - 1)];
+    const hdg = Math.atan2(n[0] - p[0], n[1] - p[1]) * 180 / Math.PI; // 시각용 근사
+    setRobot(p[0], p[1], hdg, false);
+    i = (i + 1) % pts.length;
+  }, 700);
+}
+
+function renderMap(d, step){
+  const route   = d ? decodeRoute(d.route) : null;
+  const visible = step <= 2 && !!(route || (d && d.pos));
+  $('cardMap').classList.toggle('hidden', !visible);
+
+  if(!visible){ stopDemo(); mapHidden = true; return; }
+  if(!ensureMap()) return;
+
+  // 숨김 상태에서 만들어진 지도는 크기를 모른다 → 표시 직후 1회 보정
+  if(mapHidden){ mapHidden = false; setTimeout(() => map.invalidateSize(), 0); }
+
+  // 경로 폴리라인 + 출발/도착 핀 — 배송 건이 바뀔 때만 다시 그림
+  if(route && mapRouteId !== d.docId){
+    mapRouteId = d.docId;
+    if(routeLine) routeLine.remove();
+    if(startMk)   startMk.remove();
+    if(destMk)    destMk.remove();
+    if(robotMk){  robotMk.remove(); robotMk = null; lastPosKey = ''; }
+    routeLine = L.polyline(route, { color:'#2F6BFF', weight:5, opacity:.9,
+                                    lineJoin:'round', lineCap:'round' }).addTo(map);
+    startMk = L.marker(route[0],                { icon: pinIcon('출발', false) }).addTo(map);
+    destMk  = L.marker(route[route.length - 1], { icon: pinIcon('도착', true ) }).addTo(map);
+    setTimeout(fitRoute, 50);   // invalidateSize 이후에 fit
+  }
+
+  const p = d && d.pos;
+  if(p && typeof p.lat === 'number'){
+    stopDemo();
+    const key = p.lat + ',' + p.lng + ',' + p.hdg;
+    if(key !== lastPosKey){ lastPosKey = key; setRobot(p.lat, p.lng, p.hdg, false); }
+  }else if(route && localStep !== null && step >= 1){
+    if(!demoTimer) startDemo(route);
+  }else{
+    stopDemo();
+  }
+}
+
 function renderTrack(){
   const d = currentDoc();
 
@@ -802,6 +973,8 @@ function renderTrack(){
     $('recvTime').textContent =
       String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
   }
+
+  renderMap(d, step);
 }
 
 function drawWave(){
