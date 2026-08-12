@@ -65,8 +65,10 @@
   .screen.hidden{display:none}
 
   .topbar{display:flex;align-items:center;justify-content:space-between;padding:36px 22px 8px}
-  .brand{display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:-.02em;font-size:16px}
-  .logo{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,var(--primary),#7AA0FF);display:flex;align-items:center;justify-content:center;color:#fff;font-size:14px}
+  .brand{display:flex;align-items:center;gap:9px;font-weight:800;letter-spacing:-.02em;font-size:15.5px}
+  .logo{width:28px;height:28px;border-radius:9px;background:linear-gradient(135deg,var(--primary),#6C8FFF);display:flex;align-items:center;justify-content:center;box-shadow:0 5px 12px -4px rgba(47,107,255,.55)}
+  .logo svg{width:14px;height:14px;transform:translate(-.5px,.5px)}
+  .pagehead .h em{font-style:normal;background:linear-gradient(92deg,var(--primary),#7AA0FF);-webkit-background-clip:text;background-clip:text;color:transparent}
   .badge{font-size:11px;font-weight:700;padding:5px 11px;border-radius:999px;background:#EAF0FF;color:var(--primary)}
   .pagehead{padding:34px 22px 6px}
   .pagehead .h{font-size:26px;font-weight:800;letter-spacing:-.03em}
@@ -262,12 +264,18 @@
     <!-- HOME -->
     <div class="screen" id="screenHome">
       <div class="topbar">
-        <div class="brand"><span class="logo">🤖</span> 캠퍼스 배송</div>
-        <span class="badge">홍길동 님</span>
+        <div class="brand">
+          <span class="logo">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9 22 2z"/>
+            </svg>
+          </span>
+          캠퍼스 배송
+        </div>
       </div>
-      <div class="pagehead" style="padding-top:14px">
-        <div class="h">안녕하세요 👋</div>
-        <div class="s">진행 중인 배송과 새 요청을 관리하세요</div>
+      <div class="pagehead" style="padding-top:16px">
+        <div class="h">무엇을 <em>보낼까요?</em></div>
+        <div class="s">로봇이 캠퍼스 어디든 배달해 드려요</div>
       </div>
 
       <div class="section-h"><span class="t">진행 중인 배송</span></div>
