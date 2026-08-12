@@ -242,6 +242,15 @@
   </div>
 </div>
 
+<!-- 화면 밖 · 테스트/실구현 모드 — 실구현에선 시연 컨트롤이 사라진다 -->
+<div class="namebar">
+  <span class="nl">모드</span>
+  <div class="switch" id="modeSwitch">
+    <div class="knob"></div>
+    <div class="opts"><span>테스트</span><span>실구현</span></div>
+  </div>
+</div>
+
 <!-- ★ 연결 상태 — 실패 원인이 화면에 바로 뜨도록 -->
 <div class="connbar wait" id="connBar">
   <span class="dot"></span><span id="connMsg">Firebase 연결 중…</span>
@@ -411,7 +420,7 @@
           <button class="cta danger" style="margin-top:14px" id="resolveBtn">내가 꺼낸 게 맞아요 (오탐 해제)</button>
         </div>
 
-        <div class="dock">
+        <div class="dock" id="demoDock">
           <div class="lab">시연 컨트롤 · 로컬 표시만 변경 (로봇 상태와 무관)</div>
           <div class="dock-btns">
             <button id="nextBtn">다음 단계 ▶</button>
@@ -490,6 +499,16 @@ let db = null, col = null;
 // 추적 화면 로컬 표시 상태 (시연 버튼용 — 클라우드 상태와 분리)
 let localStep = null;          // null 이면 클라우드 state 를 따름
 let localTheft = false;
+
+// ★ 테스트/실구현 모드 — 실구현에선 시연 컨트롤 숨김 + 로컬 오버라이드 금지.
+//   새로고침해도 유지되도록 localStorage 에 저장.
+let demoUI = localStorage.getItem('appMode') !== 'real';   // 기본: 테스트
+
+function applyMode(){
+  $('modeSwitch').classList.toggle('alt', !demoUI);
+  const dock = $('demoDock');
+  if(dock) dock.classList.toggle('hidden', !demoUI);
+}
 
 const SM = { DEPART:0, NAVIGATING:1, ARRIVED:2, AUTHENTICATED:3, COMPLETED:4,
              PLANNING:0, FAILED:0, REJECTED:0 };
@@ -1169,6 +1188,19 @@ function bindEvents(){
 
   $('newReqBtn').onclick = () => go('screenRequest');
 
+  // 테스트/실구현 모드 토글
+  $('modeSwitch').onclick = () => {
+    demoUI = !demoUI;
+    localStorage.setItem('appMode', demoUI ? 'demo' : 'real');
+    if(!demoUI){                       // 실구현 진입 → 로컬 오버라이드 전부 해제
+      localStep = null; localTheft = false; stopDemo();
+    }
+    applyMode();
+    if(!$('screenTrack').classList.contains('hidden')) renderTrack();
+    toast(demoUI ? '테스트 모드 — 시연 컨트롤 사용 가능'
+                 : '실구현 모드 — 실제 로봇 상태만 표시');
+  };
+
   // 건물명 토글
   $('nameSwitch').onclick = () => {
     useAlias = !useAlias;
@@ -1206,7 +1238,8 @@ function bindEvents(){
 
   $('gestureBtn').onclick = () => {
     $('authMethod').textContent = '제스처 (✌️ V)';
-    localStep = 3; renderTrack();
+    if(demoUI){ localStep = 3; renderTrack(); }
+    else toast('로봇 카메라 앞에서 ✌️ 제스처를 취해 주세요');
   };
 
   // 시연 컨트롤 — 로컬 표시만 변경
@@ -1234,6 +1267,7 @@ function bindEvents(){
    ══════════════════════════════════════════ */
 rebuildChips();
 bindEvents();
+applyMode();
 drawQR();
 renderHome();
 go('screenHome');
