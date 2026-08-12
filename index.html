@@ -143,11 +143,9 @@
   .rm{position:relative;width:42px;height:42px;will-change:transform}
   .rm .ring{position:absolute;inset:0;border-radius:50%;background:rgba(47,107,255,.30);animation:rmpulse 1.7s ease-out infinite}
   .rm .core{position:absolute;inset:7px;border-radius:50%;background:var(--primary);border:2.5px solid #fff;
-            display:flex;align-items:center;justify-content:center;font-size:14px;
+            display:flex;align-items:center;justify-content:center;
             box-shadow:0 5px 12px -3px rgba(47,107,255,.65)}
-  .rm .dir{position:absolute;left:50%;top:-4px;margin-left:-6px;width:0;height:0;
-           border-left:6px solid transparent;border-right:6px solid transparent;
-           border-bottom:10px solid var(--primary);filter:drop-shadow(0 1px 2px rgba(0,0,0,.25))}
+  .rm .core svg{transform:translateY(-.5px)}
   @keyframes rmpulse{0%{transform:scale(.55);opacity:.9}100%{transform:scale(1.5);opacity:0}}
   /* 출발/도착 핀 */
   .pin{display:flex;flex-direction:column;align-items:center;width:max-content;transform:translateX(calc(-50% + 13px))}
@@ -812,6 +810,21 @@ let mapHidden  = true;     // invalidateSize 게이트
 let animRAF = 0, demoTimer = 0, lastPosKey = '';
 let baseTiles = null, tileAlias = null;   // 현재 타일 레이어와 그 모드
 
+/* 시연용 내장 경로 — 실제 delivery_map.json 을 변환한 캠퍼스 경로.
+   문서에 route 가 없어도(=ROS 브릿지 미가동) 시연 컨트롤을 누르면
+   이 경로로 지도를 띄운다. 실주행에서는 문서의 route 가 항상 우선. */
+const DEMO_ROUTE =
+  [37.449136,126.656167,37.44922,126.656142,37.449305,126.656118,
+   37.44939,126.656103,37.449476,126.656115,37.449558,126.656151,
+   37.449638,126.656191,37.449719,126.65623,37.449799,126.656269,
+   37.44988,126.65631,37.44996,126.656349,37.450043,126.656382,
+   37.450125,126.656414,37.450203,126.656461,37.450284,126.656498,
+   37.45037,126.656502,37.450456,126.65649,37.450542,126.656476,
+   37.450628,126.656467,37.450715,126.656464,37.450801,126.656473,
+   37.450879,126.656516,37.450883,126.656616,37.450828,126.6567,
+   37.450768,126.656778,37.45071,126.656858,37.450652,126.656938,
+   37.450593,126.657019,37.450535,126.657099,37.450511,126.657132];
+
 /* 건물명 익명화 토글과 연동 —
    실제 이름 모드: OSM (건물·도로명 표시)
    건물 A·B·C 모드: CARTO nolabels (글자가 아예 없는 타일) */
@@ -853,7 +866,10 @@ function pinIcon(label, dest){
 
 function robotIcon(){
   return L.divIcon({ className:'', iconSize:[42,42], iconAnchor:[21,21],
-    html:'<div class="rm"><div class="ring"></div><div class="dir"></div><div class="core">🤖</div></div>' });
+    html:`<div class="rm"><div class="ring"></div><div class="core">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="#fff">
+        <path d="M12 2.5 19.5 21 12 16.8 4.5 21z"/>
+      </svg></div></div>` });
 }
 
 /* hdg: 도 단위, ENU(East=0, 반시계) → CSS 회전은 북쪽 기준 시계방향 */
@@ -899,8 +915,12 @@ function startDemo(pts){
 }
 
 function renderMap(d, step){
-  const route   = d ? decodeRoute(d.route) : null;
-  const visible = step <= 2 && !!(route || (d && d.pos));
+  // 실데이터 우선 — 없으면 시연 모드(로컬 단계 조작 중)에 한해 내장 경로 사용
+  const realRoute = d ? decodeRoute(d.route) : null;
+  const route     = realRoute || (localStep !== null ? decodeRoute(DEMO_ROUTE) : null);
+  const routeKey  = realRoute ? d.docId : '_demo_';
+  // 지도는 출발 준비~이동중에만. 도착 후엔 QR 인증이 주인공이라 지도는 숨김.
+  const visible   = step <= 1 && !!(route || (d && d.pos));
   $('cardMap').classList.toggle('hidden', !visible);
 
   if(!visible){ stopDemo(); mapHidden = true; return; }
@@ -909,9 +929,9 @@ function renderMap(d, step){
   // 숨김 상태에서 만들어진 지도는 크기를 모른다 → 표시 직후 1회 보정
   if(mapHidden){ mapHidden = false; setTimeout(() => map.invalidateSize(), 0); }
 
-  // 경로 폴리라인 + 출발/도착 핀 — 배송 건이 바뀔 때만 다시 그림
-  if(route && mapRouteId !== d.docId){
-    mapRouteId = d.docId;
+  // 경로 폴리라인 + 출발/도착 핀 — 배송 건(또는 데모)이 바뀔 때만 다시 그림
+  if(route && mapRouteId !== routeKey){
+    mapRouteId = routeKey;
     if(routeLine) routeLine.remove();
     if(startMk)   startMk.remove();
     if(destMk)    destMk.remove();
