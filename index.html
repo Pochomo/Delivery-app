@@ -142,10 +142,8 @@
   /* 로봇 마커 — 펄스 링 + 헤딩 화살표 (Leaflet divIcon 내부) */
   .rm{position:relative;width:42px;height:42px;will-change:transform}
   .rm .ring{position:absolute;inset:0;border-radius:50%;background:rgba(47,107,255,.30);animation:rmpulse 1.7s ease-out infinite}
-  .rm .core{position:absolute;inset:7px;border-radius:50%;background:var(--primary);border:2.5px solid #fff;
-            display:flex;align-items:center;justify-content:center;
+  .rm .core{position:absolute;inset:9px;border-radius:50%;background:var(--primary);border:3px solid #fff;
             box-shadow:0 5px 12px -3px rgba(47,107,255,.65)}
-  .rm .core svg{transform:translateY(-.5px)}
   @keyframes rmpulse{0%{transform:scale(.55);opacity:.9}100%{transform:scale(1.5);opacity:0}}
   /* 출발/도착 핀 */
   .pin{display:flex;flex-direction:column;align-items:center;width:max-content;transform:translateX(calc(-50% + 13px))}
@@ -885,20 +883,14 @@ function pinIcon(label, dest){
 
 function robotIcon(){
   return L.divIcon({ className:'', iconSize:[42,42], iconAnchor:[21,21],
-    html:`<div class="rm"><div class="ring"></div><div class="core">
-      <svg viewBox="0 0 24 24" width="15" height="15" fill="#fff">
-        <path d="M12 2.5 19.5 21 12 16.8 4.5 21z"/>
-      </svg></div></div>` });
+    html:'<div class="rm"><div class="ring"></div><div class="core"></div></div>' });
 }
 
-/* hdg: 도 단위, ENU(East=0, 반시계) → CSS 회전은 북쪽 기준 시계방향 */
-function setRobot(lat, lng, hdg, instant){
+function setRobot(lat, lng, hdg, instant){   // hdg 는 현재 미사용 (화살표 제거)
   if(!robotMk){
     robotMk = L.marker([lat, lng], { icon: robotIcon(), zIndexOffset: 1000 }).addTo(map);
     instant = true;
   }
-  const el = robotMk.getElement() && robotMk.getElement().querySelector('.rm');
-  if(el && typeof hdg === 'number') el.style.transform = `rotate(${90 - hdg}deg)`;
 
   cancelAnimationFrame(animRAF);
   if(instant){ robotMk.setLatLng([lat, lng]); return; }
