@@ -14,7 +14,7 @@
 <style>
   :root{
     --ink:#10141C;--ink-2:#1A2130;--paper:#EEF1F6;--surface:#FFFFFF;
-    --line:#E4E8F0;--text:#10141C;--muted:#7C8698;
+    --line:#E4E8F0;--text:#10141C;--muted:#616B7C; /* 4.75:1+ (KRDS 매직넘버50 충족, 구 #7C8698=3.67:1) */
     --primary:#2F6BFF;--amber:#FF9F1C;--success:#0FBF86;--danger:#FF3B5C;
     --radius:22px;
     --font:'Pretendard',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic','Segoe UI',sans-serif;
@@ -42,7 +42,7 @@
   .connbar.ok    .dot{background:var(--success)}
   .connbar.fail  .dot{background:var(--danger)}
   .connbar.wait{color:#8a6100}
-  .connbar.ok{color:#0a8f63}
+  .connbar.ok{color:#087A54}
   .connbar.fail{color:var(--danger);background:#FFF5F6;border-color:#FFD0D8}
 
   /* ★ 전체 초기화 버튼 (화면 밖) */
@@ -122,7 +122,7 @@
   .m-left .mv{font-size:22px;font-weight:800;letter-spacing:-.03em;margin-top:2px}
   .m-left .mv.alert{color:var(--danger)}
   .pill{font-size:11px;font-weight:800;padding:6px 12px;border-radius:999px}
-  .pill.ok{background:rgba(15,191,134,.14);color:#0a8f63}
+  .pill.ok{background:rgba(15,191,134,.14);color:#087A54}
   .pill.bad{background:rgba(255,59,92,.16);color:var(--danger)}
   .wave{height:34px;width:78px;margin-top:6px}
 
@@ -200,7 +200,7 @@
   .histitem .meta{flex:1}
   .histitem .meta .t{font-size:14px;font-weight:700;letter-spacing:-.01em}
   .histitem .meta .s{font-size:11.5px;color:var(--muted);margin-top:2px}
-  .tag-done{font-size:10.5px;font-weight:700;color:#0a8f63;background:rgba(15,191,134,.13);padding:4px 9px;border-radius:999px}
+  .tag-done{font-size:10.5px;font-weight:700;color:#087A54;background:rgba(15,191,134,.13);padding:4px 9px;border-radius:999px}
   .tag-live{font-size:10.5px;font-weight:700;color:var(--amber);background:rgba(255,159,28,.14);padding:4px 9px;border-radius:999px}
   .tag-fail{font-size:10.5px;font-weight:700;color:var(--danger);background:rgba(255,59,92,.13);padding:4px 9px;border-radius:999px}
 
@@ -234,24 +234,26 @@
 <!-- 화면 밖 · 건물명 표시 전환 -->
 <div class="namebar">
   <span class="nl">건물 이름</span>
-  <div class="switch" id="nameSwitch">
+  <div class="switch" id="nameSwitch" role="switch" tabindex="0"
+       aria-label="건물 이름 익명 표시 (건물 A·B·C)" aria-checked="false">
     <div class="knob"></div>
-    <div class="opts"><span>실제 이름</span><span>건물 A·B·C</span></div>
+    <div class="opts" aria-hidden="true"><span>실제 이름</span><span>건물 A·B·C</span></div>
   </div>
 </div>
 
 <!-- 화면 밖 · 테스트/실구현 모드 — 실구현에선 시연 컨트롤이 사라진다 -->
 <div class="namebar">
   <span class="nl">모드</span>
-  <div class="switch" id="modeSwitch">
+  <div class="switch" id="modeSwitch" role="switch" tabindex="0"
+       aria-label="실구현 모드 (시연 컨트롤 숨김)" aria-checked="false">
     <div class="knob"></div>
-    <div class="opts"><span>테스트</span><span>실구현</span></div>
+    <div class="opts" aria-hidden="true"><span>테스트</span><span>실구현</span></div>
   </div>
 </div>
 
 <!-- ★ 연결 상태 — 실패 원인이 화면에 바로 뜨도록 -->
-<div class="connbar wait" id="connBar">
-  <span class="dot"></span><span id="connMsg">Firebase 연결 중…</span>
+<div class="connbar wait" id="connBar" role="status" aria-live="polite">
+  <span class="dot" aria-hidden="true"></span><span id="connMsg">Firebase 연결 중…</span>
 </div>
 
 <!-- ★ 전체 초기화 — 진행 중 배송 + 모든 내역을 Firestore 에서 삭제 -->
@@ -305,10 +307,10 @@
       <div class="field" style="margin-top:18px">
         <div class="lbl">무엇을 보내나요?</div>
         <div class="chips" id="itemChips">
-          <button class="chip" data-v="행정 서류 봉투" data-ic="📄">📄 행정 서류</button>
-          <button class="chip" data-v="소형 택배" data-ic="📦">📦 소형 택배</button>
-          <button class="chip" data-v="실험 기자재" data-ic="🔬">🔬 기자재</button>
-          <button class="chip" data-v="기타 물품" data-ic="🎒">🎒 기타</button>
+          <button class="chip" data-v="행정 서류 봉투" data-ic="📄" aria-pressed="false">📄 행정 서류</button>
+          <button class="chip" data-v="소형 택배" data-ic="📦" aria-pressed="false">📦 소형 택배</button>
+          <button class="chip" data-v="실험 기자재" data-ic="🔬" aria-pressed="false">🔬 기자재</button>
+          <button class="chip" data-v="기타 물품" data-ic="🎒" aria-pressed="false">🎒 기타</button>
         </div>
       </div>
 
@@ -325,10 +327,10 @@
       <div class="field">
         <div class="lbl">수령자</div>
         <div class="seg" id="recvSeg">
-          <button class="chip on" data-v="self">본인 수령</button>
-          <button class="chip" data-v="other">다른 사람</button>
+          <button class="chip on" data-v="self" aria-pressed="true">본인 수령</button>
+          <button class="chip" data-v="other" aria-pressed="false">다른 사람</button>
         </div>
-        <input class="input" id="recvName" placeholder="수령자 이름" style="margin-top:10px;display:none">
+        <input class="input" id="recvName" placeholder="수령자 이름" aria-label="수령자 이름" style="margin-top:10px;display:none">
       </div>
 
       <div class="summary" id="summary" style="display:none">
@@ -369,15 +371,15 @@
       <div class="body">
         <!-- ★ 실시간 지도 — route/pos 필드가 있을 때만 표시 -->
         <div class="card mapcard hidden" id="cardMap">
-          <div id="map"></div>
-          <div class="map-live"><i></i>LIVE</div>
-          <button class="map-recenter" id="mapRecenter" title="경로 전체 보기">⌖</button>
+          <div id="map" role="region" aria-label="실시간 배송 지도 — 로봇 위치와 경로 표시"></div>
+          <div class="map-live" aria-hidden="true"><i></i>LIVE</div>
+          <button class="map-recenter" id="mapRecenter" title="경로 전체 보기" aria-label="경로 전체 보기">⌖</button>
         </div>
 
         <div class="card hidden" id="cardQR">
           <div class="ttl">🔐 1차 인증 · QR 코드</div>
           <div class="qrwrap">
-            <div class="qrbox"><div class="scanline"></div><div id="qr"></div></div>
+            <div class="qrbox"><div class="scanline" aria-hidden="true"></div><div id="qr" role="img" aria-label="수령 인증용 QR 코드 — 로봇 카메라에 이 화면을 보여주세요"></div></div>
             <div class="qr-hint">로봇 카메라에 이 화면을 <b>대보세요</b><br>화면을 <b>50cm 이내</b>로 가까이</div>
             <button class="altbtn" id="gestureBtn">스마트폰이 없으세요? 제스처 인증 →</button>
           </div>
@@ -431,7 +433,7 @@
 
   </div>
 
-  <div class="toast" id="toast"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <div class="tabbar">
     <button class="tab on" id="tabHome" data-go="screenHome"><span class="ti">⌂</span>홈</button>
@@ -504,8 +506,15 @@ let demoUI = localStorage.getItem('appMode') !== 'real';   // 기본: 테스트
 
 function applyMode(){
   $('modeSwitch').classList.toggle('alt', !demoUI);
+  $('modeSwitch').setAttribute('aria-checked', String(!demoUI));
   const dock = $('demoDock');
   if(dock) dock.classList.toggle('hidden', !demoUI);
+}
+
+/* 칩 그룹의 선택 상태를 aria-pressed 로 동기화 (스크린 리더 대응) */
+function syncPressed(groupSel, onEl){
+  $$(groupSel + ' .chip').forEach(x =>
+    x.setAttribute('aria-pressed', String(x === onEl)));
 }
 
 const SM = { DEPART:0, NAVIGATING:1, ARRIVED:2, AUTHENTICATED:3, COMPLETED:4,
@@ -637,6 +646,10 @@ function go(s){
   document.querySelector('.viewport').scrollTop = 0;
   $('tabHome').classList.toggle('on', s === 'screenHome');
   $('tabHist').classList.toggle('on', s === 'screenTrack');
+  if(s === 'screenHome') $('tabHome').setAttribute('aria-current', 'page');
+  else $('tabHome').removeAttribute('aria-current');
+  if(s === 'screenTrack') $('tabHist').setAttribute('aria-current', 'page');
+  else $('tabHist').removeAttribute('aria-current');
   if(s === 'screenHome')  renderHome();
   if(s === 'screenTrack') renderTrack();
 }
@@ -696,12 +709,13 @@ let req = { item:null, ic:null, from:null, to:null, recv:'self', name:'' };
 
 function buildChips(wrapId, key){
   $(wrapId).innerHTML = REAL_BUILDINGS
-    .map(b => `<button class="chip" data-v="${b}">${nm(b)}</button>`).join('');
+    .map(b => `<button class="chip" data-v="${b}" aria-pressed="${req[key] === b}">${nm(b)}</button>`).join('');
   $$('#' + wrapId + ' .chip').forEach(c => {
     if(req[key] === c.dataset.v) c.classList.add('on');
     c.onclick = () => {
       $$('#' + wrapId + ' .chip').forEach(x => x.classList.remove('on'));
       c.classList.add('on');
+      syncPressed('#' + wrapId, c);
       req[key] = c.dataset.v;
       validate();
     };
@@ -751,7 +765,7 @@ async function submitReq(){
     activeDocId = ref.id;
 
     req = { item:null, ic:null, from:null, to:null, recv:'self', name:'' };
-    $$('.chip.on').forEach(c => { if(!c.closest('#recvSeg')) c.classList.remove('on'); });
+    $$('.chip.on').forEach(c => { if(!c.closest('#recvSeg')){ c.classList.remove('on'); c.setAttribute('aria-pressed','false'); } });
     $('summary').style.display = 'none';
     $('recvName').style.display = 'none';
     $('recvName').value = '';
@@ -994,6 +1008,8 @@ function renderTrack(){
     const i = +s.dataset.s;
     s.classList.toggle('done',   i < step);
     s.classList.toggle('active', i === step);
+    if(i === step) s.setAttribute('aria-current', 'step');   // 현재 단계 — 스크린 리더 전달
+    else           s.removeAttribute('aria-current');
   });
   $('barFill').style.width = (step / 4 * 100) + '%';
 
@@ -1193,10 +1209,18 @@ function bindEvents(){
                  : '실구현 모드 — 실제 로봇 상태만 표시');
   };
 
+  // 스위치 키보드 조작 (Enter/Space → 클릭과 동일 동작)
+  ['nameSwitch', 'modeSwitch'].forEach(id => {
+    $(id).addEventListener('keydown', e => {
+      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); $(id).click(); }
+    });
+  });
+
   // 건물명 토글
   $('nameSwitch').onclick = () => {
     useAlias = !useAlias;
     $('nameSwitch').classList.toggle('alt', useAlias);
+    $('nameSwitch').setAttribute('aria-checked', String(useAlias));
     rebuildChips();
     renderHome();
     if(!$('screenTrack').classList.contains('hidden')) renderTrack();
@@ -1208,6 +1232,7 @@ function bindEvents(){
   $$('#itemChips .chip').forEach(c => c.onclick = () => {
     $$('#itemChips .chip').forEach(x => x.classList.remove('on'));
     c.classList.add('on');
+    syncPressed('#itemChips', c);
     req.item = c.dataset.v; req.ic = c.dataset.ic;
     validate();
   });
@@ -1215,6 +1240,7 @@ function bindEvents(){
   $$('#recvSeg .chip').forEach(c => c.onclick = () => {
     $$('#recvSeg .chip').forEach(x => x.classList.remove('on'));
     c.classList.add('on');
+    syncPressed('#recvSeg', c);
     req.recv = c.dataset.v;
     $('recvName').style.display = (req.recv === 'other') ? 'block' : 'none';
     validate();
