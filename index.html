@@ -108,6 +108,24 @@
   .qr-hint b{color:var(--text)}
   .altbtn{margin-top:14px;font-size:13px;font-weight:600;color:var(--primary);background:none;border:none;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 
+  /* ── 제스처 챌린지 (2차 인증) ─────────────── */
+  .ges-note{font-size:13px;color:var(--muted);text-align:center;margin-bottom:14px;line-height:1.5}
+  .ges-note b{color:var(--text)}
+  .ges-timer{margin-left:auto;font-size:12px;font-weight:800;color:var(--primary);background:#EAF0FF;padding:4px 11px;border-radius:999px;letter-spacing:0}
+  .ges-timer.warn{color:var(--danger);background:#FFF0F2;animation:pulse 1.4s infinite}
+  .ges-method{display:flex;align-items:flex-start;gap:13px;padding:14px;border:1px solid var(--line);border-radius:14px;margin-bottom:10px;background:#F9FAFD}
+  .ges-method .gi{width:48px;height:48px;border-radius:13px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:25px;flex-shrink:0}
+  .ges-method .gt{min-width:0}
+  .ges-method .gt .gs{font-size:10.5px;font-weight:800;color:var(--primary);letter-spacing:.03em}
+  .ges-method .gt .gl{font-size:15px;font-weight:800;letter-spacing:-.01em;margin-top:2px}
+  .ges-method .gt .gd{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.5}
+  .ges-method .gt .gr{font-size:11px;font-weight:700;color:var(--muted);margin-top:5px}
+  .ges-cam{position:relative;margin-top:4px;border-radius:14px;overflow:hidden;background:#0c0f15;min-height:60px}
+  .ges-cam img{width:100%;display:block}
+  .ges-cam .gc-badge{position:absolute;top:9px;left:9px;font-size:10px;font-weight:800;color:#fff;background:rgba(16,20,28,.82);padding:4px 9px;border-radius:999px;display:flex;align-items:center;gap:5px}
+  .ges-cam .gc-badge i{width:6px;height:6px;border-radius:50%;background:var(--danger);animation:pulse 1.4s infinite}
+  .ges-feedback{margin-top:10px;font-size:12.5px;font-weight:700;color:#8a6100;background:#FFF7E8;border:1px solid #FFE2AD;border-radius:11px;padding:10px 13px;text-align:center;line-height:1.5}
+
   .unlock-anim{display:flex;flex-direction:column;align-items:center;text-align:center;padding:6px 0}
   .ring{width:96px;height:96px;border-radius:50%;background:rgba(15,191,134,.12);display:flex;align-items:center;justify-content:center;margin-bottom:14px;animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
   @keyframes pop{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
@@ -385,6 +403,39 @@
           </div>
         </div>
 
+        <!-- ★ 2차 인증 · 제스처 챌린지 — /auth_challenge payload 를 그대로 렌더 (하드코딩 금지) -->
+        <div class="card hidden" id="cardGesture">
+          <div class="ttl">🕺 2차 인증 · 제스처 챌린지 <span class="ges-timer hidden" id="gesTimer"></span></div>
+          <div class="ges-note">아래 <b>두 방법 중 하나만</b> 성공하면 적재함이 열려요</div>
+
+          <div class="ges-method">
+            <div class="gi" id="gesHandIcon" aria-hidden="true">✋</div>
+            <div class="gt">
+              <div class="gs">방법 ① · 가까이 있다면 (손 제스처)</div>
+              <div class="gl" id="gesHandLabel">—</div>
+              <div class="gd" id="gesHandInst"></div>
+              <div class="gr" id="gesHandRange"></div>
+            </div>
+          </div>
+
+          <div class="ges-method">
+            <div class="gi" id="gesPoseIcon" aria-hidden="true">🧍</div>
+            <div class="gt">
+              <div class="gs">방법 ② · 멀리 있다면 (전신 자세)</div>
+              <div class="gl" id="gesPoseLabel">—</div>
+              <div class="gd" id="gesPoseInst"></div>
+              <div class="gr" id="gesPoseRange"></div>
+            </div>
+          </div>
+
+          <div class="ges-cam hidden" id="gesCamWrap">
+            <img id="gesCam" alt="로봇 카메라 실시간 화면">
+            <span class="gc-badge"><i aria-hidden="true"></i>로봇 카메라</span>
+          </div>
+
+          <div class="ges-feedback hidden" id="gesFeedback" role="status" aria-live="polite"></div>
+        </div>
+
         <div class="card hidden" id="cardUnlock">
           <div class="unlock-anim">
             <div class="ring"><svg viewBox="0 0 24 24" fill="none" stroke="#0FBF86" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 9.9-1"/></svg></div>
@@ -606,6 +657,9 @@ function initFirebase(){
           error : v.error,
           pos   : v.pos,      // {lat,lng,hdg} — 로봇 실시간 위치
           route : v.route,    // [lat,lng,...] 평탄 배열 — 주행 경로
+          auth  : v.auth,           // 제스처 챌린지 payload (로봇 발행 원본 그대로)
+          authFeedback: v.authFeedback,  // {reason, t} — 인식 진행/실패 사유
+          authCam: v.authCam,       // base64 JPEG — 로봇 카메라 실시간 프레임
           time  : v.time || '방금'
         };
       });
@@ -980,6 +1034,126 @@ function renderMap(d, step){
   }
 }
 
+/* ══════════════════════════════════════════
+   ★ 제스처 챌린지 (2차 인증) — 앱↔로봇 인증 계약
+
+   /auth_challenge JSON(doc.auth)을 그대로 렌더한다. 문구·후보의 단일
+   진실은 로봇 코드(campus_delivery_auth) — 여기서는 하드코딩하지 않는다.
+   id 는 아이콘 매핑 키로만 사용, 화면 노출 금지.
+   match_rule "or": 손/자세 둘 중 하나만 성공하면 통과.
+   ══════════════════════════════════════════ */
+
+/* id → 아이콘 (표시 보조용. 모르는 id 가 와도 깨지지 않게 폴백 제공) */
+const GES_ICONS = {
+  open_palm:'✋', fist:'✊', victory:'✌️', point:'☝️', thumbs_up:'👍',
+  both_hands_up:'🙌', left_hand_up:'🙋', right_hand_up:'🙋', t_pose:'🧍'
+};
+
+/* /auth_feedback 의 wrong_gesture:ID 표기 전용 라벨 (계약서 6절 표 기준).
+   챌린지 본문 문구는 항상 payload 원본을 사용한다. */
+const GES_FB_LABELS = {
+  open_palm:'손바닥 펴기', fist:'주먹 쥐기', victory:'브이 (V)',
+  point:'검지 가리키기', thumbs_up:'엄지 척', both_hands_up:'양손 들기',
+  left_hand_up:'왼손 들기', right_hand_up:'오른손 들기', t_pose:'T자 자세'
+};
+
+/* 인식기 reason → 한국어 안내 (로봇 describe_reason() 과 동일 규칙) */
+function describeReason(r){
+  if(!r) return '';
+  if(r.startsWith('confirming:'))
+    return `인식 중… ${r.slice(11)} 프레임 (자세를 유지해 주세요)`;
+  if(r.startsWith('depth_out_of_range:'))
+    return `거리 벗어남 (${r.slice(19)}) — 유효 범위로 이동해 주세요`;
+  if(r.startsWith('wrong_gesture:')){
+    const id = r.slice(14);
+    return `다른 손 동작이 인식됨: ${GES_FB_LABELS[id] || id}`;
+  }
+  if(r.startsWith('wrong_pose:')){
+    const id = r.slice(11);
+    return `다른 자세가 인식됨: ${GES_FB_LABELS[id] || id}`;
+  }
+  return ({
+    no_hand:'손이 보이지 않습니다',
+    no_pose:'사람이 보이지 않습니다',
+    no_valid_gesture:'요구한 손 동작이 아닙니다',
+    no_valid_pose:'요구한 자세가 아닙니다',
+    depth_unavailable:'거리 측정 실패 — 조금 뒤로 물러서 주세요',
+    no_qr_detected:'QR이 보이지 않습니다',
+    invalid_code:'등록되지 않은 QR입니다',
+    decode_empty:'QR을 읽지 못했습니다'
+  })[r] || r;
+}
+
+/* 시연용 폴백 — 실데이터(doc.auth) 없을 때 테스트 모드에서만 사용.
+   실주행에서는 로봇 payload 가 항상 우선. */
+const DEMO_CHALLENGE = {
+  nonce:'demo', match_rule:'or', timeout_sec:45,
+  hand:{ id:'victory', label:'브이 (V)',
+         instruction:'검지와 중지를 펴서 브이를 만들어 주세요.',
+         range_hint:'카메라에서 약 0.4~1.5 m' },
+  pose:{ id:'both_hands_up', label:'양손 들기',
+         instruction:'양손을 머리 위로 들어 주세요.',
+         range_hint:'카메라에서 약 1~4 m — 전신이 보이도록' }
+};
+
+let gesNonce = null, gesDeadline = 0, gesTimerInt = 0;
+
+function stopGesTimer(){ clearInterval(gesTimerInt); gesTimerInt = 0; }
+
+function tickGesTimer(){
+  const el  = $('gesTimer');
+  const rem = Math.max(0, gesDeadline - Date.now());
+  const sec = Math.ceil(rem / 1000);
+  el.textContent = rem > 0 ? `⏱ ${sec}초` : '시간 초과';
+  el.classList.toggle('warn', rem > 0 && sec <= 10);
+  if(rem <= 0) stopGesTimer();
+}
+
+function renderGesture(d, step){
+  // 실데이터 우선, 없으면 시연 모드(테스트 + 로컬 도착 단계)에 한해 데모 챌린지
+  const real = (d && d.auth && d.auth.hand) ? d.auth : null;
+  const ch   = real || ((demoUI && localStep === 2) ? DEMO_CHALLENGE : null);
+  const vis  = step === 2 && !!ch;               // 도착·인증 단계에만 표시
+
+  $('cardGesture').classList.toggle('hidden', !vis);
+  if(!vis){                                       // 빈 {} = 챌린지 없음 → 비우기
+    stopGesTimer(); gesNonce = null;
+    $('gesTimer').classList.add('hidden');
+    return;
+  }
+  $('cardGesture').classList.add('fade');
+
+  // payload 원본 그대로 렌더 (label/instruction/range_hint 만 노출)
+  $('gesHandIcon').textContent  = GES_ICONS[ch.hand?.id] || '✋';
+  $('gesHandLabel').textContent = ch.hand?.label || '—';
+  $('gesHandInst').textContent  = ch.hand?.instruction || '';
+  $('gesHandRange').textContent = ch.hand?.range_hint ? '📍 ' + ch.hand.range_hint : '';
+  $('gesPoseIcon').textContent  = GES_ICONS[ch.pose?.id] || '🧍';
+  $('gesPoseLabel').textContent = ch.pose?.label || '—';
+  $('gesPoseInst').textContent  = ch.pose?.instruction || '';
+  $('gesPoseRange').textContent = ch.pose?.range_hint ? '📍 ' + ch.pose.range_hint : '';
+
+  // 카운트다운 — 새 nonce 수신 시점부터 timeout_sec 상대 계산
+  if(ch.nonce !== gesNonce){
+    gesNonce    = ch.nonce;
+    gesDeadline = Date.now() + (Number(ch.timeout_sec) || 45) * 1000;
+    stopGesTimer();
+    gesTimerInt = setInterval(tickGesTimer, 250);
+  }
+  $('gesTimer').classList.remove('hidden');
+  tickGesTimer();
+
+  // 로봇 카메라 실시간 프레임 (실데이터에만 존재)
+  const cam = real && d.authCam;
+  $('gesCamWrap').classList.toggle('hidden', !cam);
+  if(cam) $('gesCam').src = 'data:image/jpeg;base64,' + cam;
+
+  // 실시간 인식 피드백
+  const fb = real && d.authFeedback && d.authFeedback.reason;
+  $('gesFeedback').classList.toggle('hidden', !fb);
+  if(fb) $('gesFeedback').textContent = describeReason(fb);
+}
+
 function renderTrack(){
   const d = currentDoc();
 
@@ -1045,6 +1219,7 @@ function renderTrack(){
   }
 
   renderMap(d, step);
+  renderGesture(d, step);
 }
 
 function drawWave(){
@@ -1255,9 +1430,12 @@ function bindEvents(){
   $('resetAllBtn').onclick  = resetAll;
 
   $('gestureBtn').onclick = () => {
-    $('authMethod').textContent = '제스처 (✌️ V)';
-    if(demoUI){ localStep = 3; renderTrack(); }
-    else toast('로봇 카메라 앞에서 ✌️ 제스처를 취해 주세요');
+    $('authMethod').textContent = '제스처 챌린지';
+    if(!$('cardGesture').classList.contains('hidden')){
+      // 챌린지 카드가 있으면 그리로 안내 (실주행·시연 공통)
+      $('cardGesture').scrollIntoView({ behavior:'smooth', block:'start' });
+    }else if(demoUI){ localStep = 3; renderTrack(); }
+    else toast('로봇 카메라 앞에서 안내된 동작을 취해 주세요');
   };
 
   // 시연 컨트롤 — 로컬 표시만 변경
