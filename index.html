@@ -120,8 +120,9 @@
   .ges-method .gt .gl{font-size:15px;font-weight:800;letter-spacing:-.01em;margin-top:2px}
   .ges-method .gt .gd{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.5}
   .ges-method .gt .gr{font-size:11px;font-weight:700;color:var(--muted);margin-top:5px}
-  .ges-cam{position:relative;margin-top:4px;border-radius:14px;overflow:hidden;background:#0c0f15;min-height:60px}
+  .ges-cam{position:relative;margin-bottom:12px;border-radius:14px;overflow:hidden;background:#0c0f15;min-height:150px}
   .ges-cam img{width:100%;display:block}
+  .ges-cam .gc-wait{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#8C97AE;font-size:13px;font-weight:600}
   .ges-cam .gc-badge{position:absolute;top:9px;left:9px;font-size:10px;font-weight:800;color:#fff;background:rgba(16,20,28,.82);padding:4px 9px;border-radius:999px;display:flex;align-items:center;gap:5px}
   .ges-cam .gc-badge i{width:6px;height:6px;border-radius:50%;background:var(--danger);animation:pulse 1.4s infinite}
   .ges-feedback{margin-top:10px;font-size:12.5px;font-weight:700;color:#8a6100;background:#FFF7E8;border:1px solid #FFE2AD;border-radius:11px;padding:10px 13px;text-align:center;line-height:1.5}
@@ -399,19 +400,29 @@
           <div class="qrwrap">
             <div class="qrbox"><div class="scanline" aria-hidden="true"></div><div id="qr" role="img" aria-label="수령 인증용 QR 코드 — 로봇 카메라에 이 화면을 보여주세요"></div></div>
             <div class="qr-hint">로봇 카메라에 이 화면을 <b>대보세요</b><br>화면을 <b>50cm 이내</b>로 가까이</div>
-            <button class="altbtn" id="gestureBtn">스마트폰이 없으세요? 제스처 인증 →</button>
+            <button class="altbtn" id="gestureBtn">QR 인식이 안되세요? 제스처 인증 →</button>
           </div>
         </div>
 
-        <!-- ★ 2차 인증 · 제스처 챌린지 — /auth_challenge payload 를 그대로 렌더 (하드코딩 금지) -->
+        <!-- ★ 2차 인증 · 제스처 챌린지 — /auth_challenge payload 를 그대로 렌더 (하드코딩 금지)
+             기본은 숨김. QR 카드의 '제스처 인증' 링크를 눌렀을 때만 QR 카드와 교체 표시 -->
         <div class="card hidden" id="cardGesture">
-          <div class="ttl">🕺 2차 인증 · 제스처 챌린지 <span class="ges-timer hidden" id="gesTimer"></span></div>
-          <div class="ges-note">아래 <b>두 방법 중 하나만</b> 성공하면 적재함이 열려요</div>
+          <div class="ttl">🕺 제스처 인증 <span class="ges-timer hidden" id="gesTimer"></span></div>
+          <div class="ges-note">아래 <b>두 단계 중 하나만</b> 성공하면 적재함이 열려요<br>가까이 있으면 <b>1단계</b>, 멀리 있으면 <b>2단계</b></div>
+
+          <!-- 로봇 카메라 — 제스처 인증 중에는 항상 표시 (프레임 수신 전엔 대기 안내) -->
+          <div class="ges-cam" id="gesCamWrap">
+            <img id="gesCam" class="hidden" alt="로봇 카메라 실시간 화면">
+            <div class="gc-wait" id="gesCamWait">로봇 카메라 연결 중…</div>
+            <span class="gc-badge"><i aria-hidden="true"></i>로봇 카메라</span>
+          </div>
+
+          <div class="ges-feedback hidden" id="gesFeedback" role="status" aria-live="polite"></div>
 
           <div class="ges-method">
             <div class="gi" id="gesHandIcon" aria-hidden="true">✋</div>
             <div class="gt">
-              <div class="gs">방법 ① · 가까이 있다면 (손 제스처)</div>
+              <div class="gs">1단계 · 가까이 있다면 (손 제스처)</div>
               <div class="gl" id="gesHandLabel">—</div>
               <div class="gd" id="gesHandInst"></div>
               <div class="gr" id="gesHandRange"></div>
@@ -421,19 +432,14 @@
           <div class="ges-method">
             <div class="gi" id="gesPoseIcon" aria-hidden="true">🧍</div>
             <div class="gt">
-              <div class="gs">방법 ② · 멀리 있다면 (전신 자세)</div>
+              <div class="gs">2단계 · 멀리 있다면 (전신 자세)</div>
               <div class="gl" id="gesPoseLabel">—</div>
               <div class="gd" id="gesPoseInst"></div>
               <div class="gr" id="gesPoseRange"></div>
             </div>
           </div>
 
-          <div class="ges-cam hidden" id="gesCamWrap">
-            <img id="gesCam" alt="로봇 카메라 실시간 화면">
-            <span class="gc-badge"><i aria-hidden="true"></i>로봇 카메라</span>
-          </div>
-
-          <div class="ges-feedback hidden" id="gesFeedback" role="status" aria-live="polite"></div>
+          <button class="altbtn" id="backToQrBtn">← QR 인증으로 돌아가기</button>
         </div>
 
         <div class="card hidden" id="cardUnlock">
@@ -1096,6 +1102,7 @@ const DEMO_CHALLENGE = {
          range_hint:'카메라에서 약 1~4 m — 전신이 보이도록' }
 };
 
+let gesMode = false;                 // 제스처 인증 화면 진입 여부 (QR 카드와 교체 표시)
 let gesNonce = null, gesDeadline = 0, gesTimerInt = 0;
 
 function stopGesTimer(){ clearInterval(gesTimerInt); gesTimerInt = 0; }
@@ -1110,13 +1117,17 @@ function tickGesTimer(){
 }
 
 function renderGesture(d, step){
+  // 도착 단계를 벗어나면 제스처 화면 상태 해제 (다음 도착 때 QR 부터 시작)
+  if(step !== 2) gesMode = false;
+
   // 실데이터 우선, 없으면 시연 모드(테스트 + 로컬 도착 단계)에 한해 데모 챌린지
   const real = (d && d.auth && d.auth.hand) ? d.auth : null;
   const ch   = real || ((demoUI && localStep === 2) ? DEMO_CHALLENGE : null);
-  const vis  = step === 2 && !!ch;               // 도착·인증 단계에만 표시
+  // 사용자가 '제스처 인증'을 선택했을 때만 표시 (QR 카드와 교체)
+  const vis  = step === 2 && gesMode;
 
   $('cardGesture').classList.toggle('hidden', !vis);
-  if(!vis){                                       // 빈 {} = 챌린지 없음 → 비우기
+  if(!vis){
     stopGesTimer(); gesNonce = null;
     $('gesTimer').classList.add('hidden');
     return;
@@ -1124,29 +1135,33 @@ function renderGesture(d, step){
   $('cardGesture').classList.add('fade');
 
   // payload 원본 그대로 렌더 (label/instruction/range_hint 만 노출)
-  $('gesHandIcon').textContent  = GES_ICONS[ch.hand?.id] || '✋';
-  $('gesHandLabel').textContent = ch.hand?.label || '—';
-  $('gesHandInst').textContent  = ch.hand?.instruction || '';
-  $('gesHandRange').textContent = ch.hand?.range_hint ? '📍 ' + ch.hand.range_hint : '';
-  $('gesPoseIcon').textContent  = GES_ICONS[ch.pose?.id] || '🧍';
-  $('gesPoseLabel').textContent = ch.pose?.label || '—';
-  $('gesPoseInst').textContent  = ch.pose?.instruction || '';
-  $('gesPoseRange').textContent = ch.pose?.range_hint ? '📍 ' + ch.pose.range_hint : '';
+  // 챌린지 미수신(ch 없음) 시에는 대기 상태로 표시
+  $('gesHandIcon').textContent  = GES_ICONS[ch?.hand?.id] || '✋';
+  $('gesHandLabel').textContent = ch?.hand?.label || '로봇 안내 대기 중…';
+  $('gesHandInst').textContent  = ch?.hand?.instruction || '';
+  $('gesHandRange').textContent = ch?.hand?.range_hint ? '📍 ' + ch.hand.range_hint : '';
+  $('gesPoseIcon').textContent  = GES_ICONS[ch?.pose?.id] || '🧍';
+  $('gesPoseLabel').textContent = ch?.pose?.label || '로봇 안내 대기 중…';
+  $('gesPoseInst').textContent  = ch?.pose?.instruction || '';
+  $('gesPoseRange').textContent = ch?.pose?.range_hint ? '📍 ' + ch.pose.range_hint : '';
 
   // 카운트다운 — 새 nonce 수신 시점부터 timeout_sec 상대 계산
-  if(ch.nonce !== gesNonce){
+  if(ch && ch.nonce !== gesNonce){
     gesNonce    = ch.nonce;
     gesDeadline = Date.now() + (Number(ch.timeout_sec) || 45) * 1000;
     stopGesTimer();
     gesTimerInt = setInterval(tickGesTimer, 250);
   }
-  $('gesTimer').classList.remove('hidden');
-  tickGesTimer();
+  $('gesTimer').classList.toggle('hidden', !ch);
+  if(ch) tickGesTimer();
 
-  // 로봇 카메라 실시간 프레임 (실데이터에만 존재)
+  // 로봇 카메라 — 인증 중에는 영역을 항상 표시, 프레임 수신 전엔 대기 안내
   const cam = real && d.authCam;
-  $('gesCamWrap').classList.toggle('hidden', !cam);
+  $('gesCam').classList.toggle('hidden', !cam);
+  $('gesCamWait').classList.toggle('hidden', !!cam);
   if(cam) $('gesCam').src = 'data:image/jpeg;base64,' + cam;
+  else $('gesCamWait').textContent = real ? '로봇 카메라 연결 중…'
+                                          : '로봇 카메라 화면 (시연 모드 — 실주행 시 표시)';
 
   // 실시간 인식 피드백
   const fb = real && d.authFeedback && d.authFeedback.reason;
@@ -1187,7 +1202,7 @@ function renderTrack(){
   });
   $('barFill').style.width = (step / 4 * 100) + '%';
 
-  show('cardQR',      step === 2);
+  show('cardQR',      step === 2 && !gesMode);   // 제스처 인증 선택 시 QR 카드와 교체
   show('cardUnlock',  step >= 3 && !theft);
   show('cardMonitor', step >= 3);
   show('cardReceipt', step === 4 && !theft);
@@ -1363,7 +1378,7 @@ function bindEvents(){
     const openBtn = e.target.closest('[data-open]');
     if(openBtn){
       activeDocId = openBtn.dataset.open;
-      localStep = null; localTheft = false;
+      localStep = null; localTheft = false; gesMode = false;
       drawQR();
       go('screenTrack');
     }
@@ -1429,13 +1444,16 @@ function bindEvents(){
   $('clearHistBtn').onclick = clearHistory;
   $('resetAllBtn').onclick  = resetAll;
 
+  // QR ↔ 제스처 인증 화면 전환
   $('gestureBtn').onclick = () => {
     $('authMethod').textContent = '제스처 챌린지';
-    if(!$('cardGesture').classList.contains('hidden')){
-      // 챌린지 카드가 있으면 그리로 안내 (실주행·시연 공통)
-      $('cardGesture').scrollIntoView({ behavior:'smooth', block:'start' });
-    }else if(demoUI){ localStep = 3; renderTrack(); }
-    else toast('로봇 카메라 앞에서 안내된 동작을 취해 주세요');
+    gesMode = true;
+    renderTrack();
+    $('cardGesture').scrollIntoView({ behavior:'smooth', block:'start' });
+  };
+  $('backToQrBtn').onclick = () => {
+    gesMode = false;
+    renderTrack();
   };
 
   // 시연 컨트롤 — 로컬 표시만 변경
@@ -1450,7 +1468,7 @@ function bindEvents(){
     localTheft = true; renderTrack();
   };
   $('resetBtn').onclick = () => {
-    localStep = null; localTheft = false;
+    localStep = null; localTheft = false; gesMode = false;
     drawQR(); renderTrack();
   };
   $('resolveBtn').onclick = () => {
