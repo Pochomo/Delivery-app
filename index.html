@@ -11,6 +11,9 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 
+<!-- 실제 스캔 가능한 QR 렌더링 (일회성 토큰 인증용) -->
+<script src="https://unpkg.com/qrcode-generator@1.4.4/qrcode.js"></script>
+
 <style>
   :root{
     --ink:#10141C;--ink-2:#1A2130;--paper:#EEF1F6;--surface:#FFFFFF;
@@ -126,6 +129,8 @@
   .ges-cam .gc-badge{position:absolute;top:9px;left:9px;font-size:10px;font-weight:800;color:#fff;background:rgba(16,20,28,.82);padding:4px 9px;border-radius:999px;display:flex;align-items:center;gap:5px}
   .ges-cam .gc-badge i{width:6px;height:6px;border-radius:50%;background:var(--danger);animation:pulse 1.4s infinite}
   .ges-feedback{margin-top:10px;font-size:12.5px;font-weight:700;color:#8a6100;background:#FFF7E8;border:1px solid #FFE2AD;border-radius:11px;padding:10px 13px;text-align:center;line-height:1.5}
+  .ges-feedback.ok{color:#087A54;background:rgba(15,191,134,.10);border-color:rgba(15,191,134,.35)}
+  .ges-feedback.bad{color:var(--danger);background:#FFF5F6;border-color:#FFD0D8}
 
   .unlock-anim{display:flex;flex-direction:column;align-items:center;text-align:center;padding:6px 0}
   .ring{width:96px;height:96px;border-radius:50%;background:rgba(15,191,134,.12);display:flex;align-items:center;justify-content:center;margin-bottom:14px;animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
@@ -400,6 +405,7 @@
           <div class="qrwrap">
             <div class="qrbox"><div class="scanline" aria-hidden="true"></div><div id="qr" role="img" aria-label="수령 인증용 QR 코드 — 로봇 카메라에 이 화면을 보여주세요"></div></div>
             <div class="qr-hint">로봇 카메라에 이 화면을 <b>대보세요</b><br>화면을 <b>50cm 이내</b>로 가까이</div>
+            <div class="ges-feedback hidden" id="qrFeedback" role="status" aria-live="polite"></div>
             <button class="altbtn" id="gestureBtn">QR 인식이 안되세요? 제스처 인증 →</button>
           </div>
         </div>
@@ -664,8 +670,10 @@ function initFirebase(){
           pos   : v.pos,      // {lat,lng,hdg} — 로봇 실시간 위치
           route : v.route,    // [lat,lng,...] 평탄 배열 — 주행 경로
           auth  : v.auth,           // 제스처 챌린지 payload (로봇 발행 원본 그대로)
-          authFeedback: v.authFeedback,  // {reason, t} — 인식 진행/실패 사유
+          authState: v.authState,   // IDLE/QR_SCANNING/GESTURE_AUTH/AUTHENTICATED/AUTH_FAILED
+          authFeedback: v.authFeedback,  // 구조화 피드백({state,hand,pose,qr}) 또는 {reason}
           authCam: v.authCam,       // base64 JPEG — 로봇 카메라 실시간 프레임
+          qrToken: v.qrToken,       // 이번 배송의 일회성 QR 정답 토큰
           time  : v.time || '방금'
         };
       });
@@ -809,10 +817,14 @@ async function submitReq(){
   btn.textContent = '요청 전송 중…';
 
   const code = '#A-' + Math.floor(2400 + Math.random() * 99);
+  // 일회성 QR 정답 토큰 — 브릿지가 /delivery_request 로 로봇 인증 노드에 전달하고,
+  // 수령자 폰 화면의 QR(이 토큰)과 대조하여 인증한다. (고정 시크릿 재사용 방지)
+  const qrToken = Array.from(crypto.getRandomValues(new Uint8Array(16)),
+                             b => b.toString(16).padStart(2, '0')).join('');
   const payload = {
     code, item: req.item, ic: req.ic || '📦',
     from: req.from, to: req.to,
-    recv: req.recv, name: req.name,
+    recv: req.recv, name: req.name, qrToken,
     state: 'DEPART',            // ← 브릿지가 이걸 보고 경로 생성 시작
     weight: 0, unlock: false, theft: false,
     time: new Date().toLocaleTimeString('ko-KR',
@@ -848,7 +860,25 @@ function currentDoc(){
   return deliveries.find(d => d.docId === activeDocId) || null;
 }
 
-function drawQR(){
+let qrDrawnFor = null;   // 같은 토큰 재렌더 방지
+
+function drawQR(token){
+  // 토큰이 있으면 실제 스캔 가능한 QR 렌더 (일회성 토큰 인증)
+  if(token && typeof qrcode === 'function'){
+    if(qrDrawnFor === token) return;
+    try{
+      const qr = qrcode(0, 'M');
+      qr.addData(token);
+      qr.make();
+      $('qr').innerHTML = qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true });
+      const svg = $('qr').querySelector('svg');
+      if(svg){ svg.style.width = '100%'; svg.style.height = '100%'; }
+      qrDrawnFor = token;
+      return;
+    }catch(e){ /* 렌더 실패 시 아래 장식용 패턴으로 폴백 */ }
+  }
+  if(qrDrawnFor === '__decor__') return;   // 장식 패턴은 1회만
+  qrDrawnFor = '__decor__';
   const N = 25, cell = 100 / N, ns = 'http://www.w3.org/2000/svg';
   const svg = document.createElementNS(ns, 'svg');
   svg.setAttribute('viewBox', '0 0 100 100');
@@ -1116,15 +1146,57 @@ function tickGesTimer(){
   if(rem <= 0) stopGesTimer();
 }
 
+/* 구조화 피드백({state, hand, pose, qr}) 또는 단순형({reason})에서 표시 문구 추출 */
+function extractFeedback(fb){
+  if(!fb) return { text:'', kind:'' };
+  if(typeof fb === 'string') return { text: describeReason(fb), kind:'' };
+  if(fb.reason && !fb.state)  return { text: describeReason(fb.reason), kind:'' };
+
+  // 검사기 중 하나라도 정상 인식 중이면 긍정 피드백 우선
+  for(const k of ['qr','hand','pose']){
+    const s = fb[k];
+    if(s && s.detected && !s.reason){
+      if(k === 'qr') return { text:'QR 인식 중 — 화면을 그대로 유지해 주세요', kind:'ok' };
+      const g = GES_FB_LABELS[s.gesture] || s.gesture;
+      return { text:`${g ? "'" + g + "' " : ''}인식됨 — 자세를 그대로 유지해 주세요`, kind:'ok' };
+    }
+  }
+  const parts = [];
+  for(const k of ['qr','hand','pose']){
+    const s = fb[k];
+    if(s && s.reason) parts.push(describeReason(s.reason));
+  }
+  return { text: parts.join(' · '), kind:'' };
+}
+
 function renderGesture(d, step){
   // 도착 단계를 벗어나면 제스처 화면 상태 해제 (다음 도착 때 QR 부터 시작)
   if(step !== 2) gesMode = false;
 
+  // ★ 로봇 인증 상태 머신(/auth_state) 연동:
+  //   QR 타임아웃 등으로 로봇이 제스처 단계로 넘어가면 화면도 자동 전환
+  const phase = d && d.authState;
+  if(step === 2 && phase === 'GESTURE_AUTH') gesMode = true;
+
   // 실데이터 우선, 없으면 시연 모드(테스트 + 로컬 도착 단계)에 한해 데모 챌린지
   const real = (d && d.auth && d.auth.hand) ? d.auth : null;
   const ch   = real || ((demoUI && localStep === 2) ? DEMO_CHALLENGE : null);
-  // 사용자가 '제스처 인증'을 선택했을 때만 표시 (QR 카드와 교체)
+  // 사용자가 '제스처 인증'을 선택했거나 로봇이 제스처 단계일 때 표시 (QR 카드와 교체)
   const vis  = step === 2 && gesMode;
+  // 자동 전환이 이 함수에서 일어나므로 QR 카드 표시를 여기서 최종 동기화
+  show('cardQR', step === 2 && !gesMode);
+
+  // QR 카드 하단 실시간 피드백 (QR 스캔 단계)
+  const fbData = extractFeedback(d && d.authFeedback);
+  const qrFb   = step === 2 && !gesMode &&
+                 (phase === 'QR_SCANNING' || phase === 'AUTH_FAILED') && fbData.text;
+  $('qrFeedback').classList.toggle('hidden', !qrFb);
+  if(qrFb){
+    $('qrFeedback').textContent = phase === 'AUTH_FAILED'
+      ? '인증 실패 — 잠시 후 다시 시도해 주세요' : fbData.text;
+    $('qrFeedback').className = 'ges-feedback' +
+      (phase === 'AUTH_FAILED' ? ' bad' : (fbData.kind ? ' ' + fbData.kind : ''));
+  }
 
   $('cardGesture').classList.toggle('hidden', !vis);
   if(!vis){
@@ -1155,18 +1227,29 @@ function renderGesture(d, step){
   $('gesTimer').classList.toggle('hidden', !ch);
   if(ch) tickGesTimer();
 
-  // 로봇 카메라 — 인증 중에는 영역을 항상 표시, 프레임 수신 전엔 대기 안내
-  const cam = real && d.authCam;
+  const failed = phase === 'AUTH_FAILED';
+
+  // 로봇 카메라 — 인증 중에는 영역을 항상 표시, 프레임 수신 전엔 대기 안내.
+  // 인증 실패로 세션이 끝난 상태에서는 카메라 영역을 숨긴다.
+  const cam = d && d.authCam;
+  $('gesCamWrap').classList.toggle('hidden', failed);
   $('gesCam').classList.toggle('hidden', !cam);
   $('gesCamWait').classList.toggle('hidden', !!cam);
   if(cam) $('gesCam').src = 'data:image/jpeg;base64,' + cam;
-  else $('gesCamWait').textContent = real ? '로봇 카메라 연결 중…'
-                                          : '로봇 카메라 화면 (시연 모드 — 실주행 시 표시)';
+  else $('gesCamWait').textContent = (real || phase)
+      ? '로봇 카메라 연결 중…'
+      : '로봇 카메라 화면 (시연 모드 — 실주행 시 표시)';
 
-  // 실시간 인식 피드백
-  const fb = real && d.authFeedback && d.authFeedback.reason;
-  $('gesFeedback').classList.toggle('hidden', !fb);
-  if(fb) $('gesFeedback').textContent = describeReason(fb);
+  // 실시간 인식 피드백 (구조화/단순형 모두 지원) — 실패 배너는 챌린지 유무와 무관
+  const showFb = failed || (real && fbData.text);
+  $('gesFeedback').classList.toggle('hidden', !showFb);
+  if(showFb){
+    $('gesFeedback').textContent = failed
+      ? '인증에 실패했어요 — 로봇이 대기 상태로 돌아갑니다. 잠시 후 다시 시도해 주세요'
+      : fbData.text;
+    $('gesFeedback').className = 'ges-feedback' +
+      (failed ? ' bad' : (fbData.kind ? ' ' + fbData.kind : ''));
+  }
 }
 
 function renderTrack(){
@@ -1233,6 +1316,7 @@ function renderTrack(){
       String(n.getHours()).padStart(2,'0') + ':' + String(n.getMinutes()).padStart(2,'0');
   }
 
+  if(d && d.qrToken) drawQR(d.qrToken);   // 이번 배송의 일회성 토큰으로 실제 QR 렌더
   renderMap(d, step);
   renderGesture(d, step);
 }
