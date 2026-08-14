@@ -492,6 +492,7 @@
         <div class="dock" id="demoDock">
           <div class="lab">시연 컨트롤 · 로컬 표시만 변경 (로봇 상태와 무관)</div>
           <div class="dock-btns">
+            <button id="prevBtn">◀ 이전 단계</button>
             <button id="nextBtn">다음 단계 ▶</button>
             <button class="warn" id="theftBtn">도난 시뮬레이션</button>
             <button id="resetBtn">처음으로 ↺</button>
@@ -1574,6 +1575,15 @@ function bindEvents(){
     const d = currentDoc();
     const cur = (localStep !== null) ? localStep : (d ? (SM[d.state] ?? 0) : 0);
     if(cur < 4) localStep = cur + 1;
+    renderTrack();
+  };
+  // 인증 넘어간 뒤에도 그 자리에서 되돌아와 QR/제스처를 이어 테스트하는 용도
+  $('prevBtn').onclick = () => {
+    const d = currentDoc();
+    const cur = (localStep !== null) ? localStep : (d ? (SM[d.state] ?? 0) : 0);
+    if(cur > 0) localStep = cur - 1;
+    if(localStep !== 2) gesMode = false;   // 인증 단계 이탈 시 제스처 화면 해제
+    localTheft = false;
     renderTrack();
   };
   $('theftBtn').onclick = () => {
