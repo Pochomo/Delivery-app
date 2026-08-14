@@ -490,7 +490,7 @@
         </div>
 
         <div class="dock" id="demoDock">
-          <div class="lab">시연 컨트롤 · 로컬 표시만 변경 (로봇 상태와 무관)</div>
+          <div class="lab" id="dockLab">시연 컨트롤 · 로컬 표시만 변경 (로봇 상태와 무관)</div>
           <div class="dock-btns">
             <button id="prevBtn">◀ 이전 단계</button>
             <button id="nextBtn">다음 단계 ▶</button>
@@ -1296,6 +1296,15 @@ function renderTrack(){
   $('heroTitle').textContent = h.t;
   $('heroSub').textContent   = (step === 1 && d) ? routeText(d.from, d.to) : h.sub;
   $('etaLab').textContent    = h.lab;
+
+  // 시연 컨트롤 사용 중엔 화면이 로컬 고정됨을 명시 (클라우드 상태 미반영 혼동 방지)
+  const lab = $('dockLab');
+  if(lab){
+    lab.textContent = (localStep !== null)
+      ? '⚠ 로컬 고정 중 — 로봇 실제 상태를 보려면 "처음으로 ↺"'
+      : '시연 컨트롤 · 로컬 표시만 변경 (로봇 상태와 무관)';
+    lab.style.color = (localStep !== null) ? '#B54708' : '';
+  }
 
   // ETA — 클라우드 값 우선
   if(step >= 2){
