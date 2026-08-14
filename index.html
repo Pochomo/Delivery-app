@@ -568,6 +568,7 @@ let db = null, col = null;
 
 // 추적 화면 로컬 표시 상태 (시연 버튼용 — 클라우드 상태와 분리)
 let localStep = null;          // null 이면 클라우드 state 를 따름
+let pinnedCloudStep = null;    // 로컬 고정 시점의 클라우드 단계 — 이후 실제 상태가 바뀌면 고정 자동 해제
 let localTheft = false;
 
 // ★ 테스트/실구현 모드 — 실구현에선 시연 컨트롤 숨김 + 로컬 오버라이드 금지.
@@ -1285,6 +1286,15 @@ function renderGesture(d, step){
 function renderTrack(){
   const d = currentDoc();
 
+  // ★ 실데이터 우선: 로컬 고정 중이라도 로봇(클라우드) 단계가 실제로 바뀌면 자동 해제
+  //   — 시연 버튼으로 미리보기하다가 bag/실차 상태가 갱신되면 그 즉시 실제 화면으로 전환
+  const cloudStep = d ? (SM[d.state] ?? 0) : null;
+  if(localStep !== null && cloudStep !== null &&
+     pinnedCloudStep !== null && cloudStep !== pinnedCloudStep){
+    localStep = null; localTheft = false; pinnedCloudStep = null;
+    toast('로봇 상태가 갱신되어 실제 화면으로 전환했어요');
+  }
+
   // 로컬 시연 버튼이 눌렸으면 그 값을, 아니면 클라우드 상태를 따름
   const step  = (localStep !== null) ? localStep
               : (d ? (SM[d.state] ?? 0) : 0);
@@ -1301,7 +1311,7 @@ function renderTrack(){
   const lab = $('dockLab');
   if(lab){
     lab.textContent = (localStep !== null)
-      ? '⚠ 로컬 고정 중 — 로봇 실제 상태를 보려면 "처음으로 ↺"'
+      ? '⚠ 로컬 미리보기 중 — 로봇 상태가 바뀌면 자동으로 실제 화면 전환'
       : '시연 컨트롤 · 로컬 표시만 변경 (로봇 상태와 무관)';
     lab.style.color = (localStep !== null) ? '#B54708' : '';
   }
@@ -1579,12 +1589,16 @@ function bindEvents(){
     renderTrack();
   };
 
-  // 시연 컨트롤 — 로컬 표시만 변경
+  // 시연 컨트롤 — 로컬 미리보기 (클라우드 단계가 실제로 바뀌면 자동 해제됨)
+  const pinCloud = () => {                 // 고정 시점의 클라우드 단계 기억
+    const d = currentDoc();
+    pinnedCloudStep = d ? (SM[d.state] ?? 0) : null;
+  };
   $('nextBtn').onclick = () => {
     const d = currentDoc();
     const cur = (localStep !== null) ? localStep : (d ? (SM[d.state] ?? 0) : 0);
     if(cur < 4) localStep = cur + 1;
-    renderTrack();
+    pinCloud(); renderTrack();
   };
   // 인증 넘어간 뒤에도 그 자리에서 되돌아와 QR/제스처를 이어 테스트하는 용도
   $('prevBtn').onclick = () => {
@@ -1593,18 +1607,18 @@ function bindEvents(){
     if(cur > 0) localStep = cur - 1;
     if(localStep !== 2) gesMode = false;   // 인증 단계 이탈 시 제스처 화면 해제
     localTheft = false;
-    renderTrack();
+    pinCloud(); renderTrack();
   };
   $('theftBtn').onclick = () => {
     if(localStep === null || localStep < 3) localStep = 3;
-    localTheft = true; renderTrack();
+    localTheft = true; pinCloud(); renderTrack();
   };
   $('resetBtn').onclick = () => {
-    localStep = null; localTheft = false; gesMode = false;
+    localStep = null; localTheft = false; gesMode = false; pinnedCloudStep = null;
     drawQR(); renderTrack();
   };
   $('resolveBtn').onclick = () => {
-    localTheft = false; localStep = 4; renderTrack();
+    localTheft = false; localStep = 4; pinCloud(); renderTrack();
   };
 }
 
