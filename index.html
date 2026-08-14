@@ -623,6 +623,11 @@ function setConn(cls, msg){
 /* ══════════════════════════════════════════
    Firebase 초기화
    ══════════════════════════════════════════ */
+// 진행형 상태만 '활성 배송'으로 취급 — REJECTED/FAILED는 내역 리스트에만 표시
+// (종결 문서가 활성으로 잡히면 추적 화면·자동 선택이 오동작. 통합 리허설에서 발견)
+const PROGRESS_STATES = ['DEPART','PLANNING','NAVIGATING','ARRIVED','AUTHENTICATED'];
+const liveDoc = () => deliveries.find(d => PROGRESS_STATES.includes(d.state));
+
 function initFirebase(){
   try{
     db  = getFirestore(initializeApp(firebaseConfig));
@@ -679,7 +684,7 @@ function initFirebase(){
       });
 
       // 진행 중 문서를 자동으로 활성 추적 대상으로
-      const live = deliveries.find(d => d.state !== 'COMPLETED');
+      const live = liveDoc();
       if(!activeDocId || !deliveries.some(d => d.docId === activeDocId)){
         activeDocId = live ? live.docId : null;
       }
@@ -726,7 +731,7 @@ function go(s){
    홈 렌더
    ══════════════════════════════════════════ */
 function renderHome(){
-  const live = deliveries.find(d => d.state !== 'COMPLETED');
+  const live = liveDoc();
   const aw   = $('activeWrap');
 
   if(live){
