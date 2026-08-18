@@ -429,7 +429,7 @@
              기본은 숨김. QR 카드의 '제스처 인증' 링크를 눌렀을 때만 QR 카드와 교체 표시 -->
         <div class="card hidden" id="cardGesture">
           <div class="ttl">🕺 제스처 인증 <span class="ges-timer hidden" id="gesTimer"></span></div>
-          <div class="ges-note">아래 <b>두 단계 중 하나만</b> 성공하면 적재함이 열려요<br>가까이 있으면 <b>1단계</b>, 멀리 있으면 <b>2단계</b></div>
+          <div class="ges-note" id="gesNote">아래 <b>1단계 → 2단계</b>를 차례로 성공하면 적재함이 열려요<br><b>1단계</b>는 가까이(0.4~1.5 m), <b>2단계</b>는 뒤로 물러나서(1~4 m)</div>
 
           <!-- 로봇 카메라 — 제스처 인증 중에는 항상 표시 (프레임 수신 전엔 대기 안내) -->
           <div class="ges-cam" id="gesCamWrap">
@@ -501,7 +501,6 @@
         </div>
 
         <div class="dock" id="demoDock">
-          <div class="lab" id="dockLab">시연 컨트롤 · 로컬 표시만 변경 (로봇 상태와 무관)</div>
           <div class="dock-btns">
             <button id="prevBtn">◀ 이전 단계</button>
             <button id="nextBtn">다음 단계 ▶</button>
@@ -1104,7 +1103,7 @@ function renderMap(d, step){
    /auth_challenge JSON(doc.auth)을 그대로 렌더한다. 문구·후보의 단일
    진실은 로봇 코드(campus_delivery_auth) — 여기서는 하드코딩하지 않는다.
    id 는 아이콘 매핑 키로만 사용, 화면 노출 금지.
-   match_rule "or": 손/자세 둘 중 하나만 성공하면 통과.
+   match_rule "and"(기본): 1단계 손 제스처 → 2단계 전신 자세 순차 통과 / "or": 둘 중 하나만.
    ══════════════════════════════════════════ */
 
 /* id → 아이콘 (표시 보조용. 모르는 id 가 와도 깨지지 않게 폴백 제공) */
@@ -1151,7 +1150,7 @@ function describeReason(r){
 /* 시연용 폴백 — 실데이터(doc.auth) 없을 때 테스트 모드에서만 사용.
    실주행에서는 로봇 payload 가 항상 우선. */
 const DEMO_CHALLENGE = {
-  nonce:'demo', match_rule:'or', timeout_sec:45,
+  nonce:'demo', match_rule:'and', timeout_sec:60,
   hand:{ id:'victory', label:'브이 (V)',
          instruction:'검지와 중지를 펴서 브이를 만들어 주세요.',
          range_hint:'카메라에서 약 0.4~1.5 m' },
@@ -1181,6 +1180,13 @@ function extractFeedback(fb){
   if(!fb) return { text:'', kind:'' };
   if(typeof fb === 'string') return { text: describeReason(fb), kind:'' };
   if(fb.reason && !fb.state)  return { text: describeReason(fb.reason), kind:'' };
+
+  // AND 규칙(1단계 손 → 2단계 자세): 로봇이 stage=2 를 보내면 1단계 완료를 알리고 2단계로 안내
+  if(fb.stage === 2){
+    const p = fb.pose || {};
+    if(p.detected && !p.reason) return { text:'2단계 인식됨 — 자세를 그대로 유지해 주세요', kind:'ok' };
+    return { text:'1단계 완료 ✓ — 뒤로 물러나 2단계 자세를 취해 주세요' + (p.reason ? ' · ' + describeReason(p.reason) : ''), kind:'ok' };
+  }
 
   // 검사기 중 하나라도 정상 인식 중이면 긍정 피드백 우선
   for(const k of ['qr','hand','pose']){
@@ -1236,6 +1242,12 @@ function renderGesture(d, step){
     return;
   }
   $('cardGesture').classList.add('fade');
+
+  // 판정 규칙 안내 (payload.match_rule): and = 1단계 → 2단계 순차, or = 둘 중 하나
+  const rule = (ch && ch.match_rule) || 'and';
+  $('gesNote').innerHTML = rule === 'or'
+    ? '아래 <b>두 단계 중 하나만</b> 성공하면 적재함이 열려요<br>가까이 있으면 <b>1단계</b>, 멀리 있으면 <b>2단계</b>'
+    : '아래 <b>1단계 → 2단계</b>를 차례로 성공하면 적재함이 열려요<br><b>1단계</b>는 가까이(0.4~1.5 m), <b>2단계</b>는 뒤로 물러나서(1~4 m)';
 
   // payload 원본 그대로 렌더 (label/instruction/range_hint 만 노출)
   // 챌린지 미수신(ch 없음) 시에는 대기 상태로 표시
@@ -1334,15 +1346,6 @@ function renderTrack(){
   $('heroTitle').textContent = h.t;
   $('heroSub').textContent   = (step === 1 && d) ? routeText(d.from, d.to) : h.sub;
   $('etaLab').textContent    = h.lab;
-
-  // 시연 컨트롤 사용 중엔 화면이 로컬 고정됨을 명시 (클라우드 상태 미반영 혼동 방지)
-  const lab = $('dockLab');
-  if(lab){
-    lab.textContent = (localStep !== null)
-      ? '⚠ 로컬 미리보기 중 — 로봇 상태가 바뀌면 자동으로 실제 화면 전환'
-      : '시연 컨트롤 · 로컬 표시만 변경 (로봇 상태와 무관)';
-    lab.style.color = (localStep !== null) ? '#B54708' : '';
-  }
 
   // ETA — 클라우드 값 우선
   if(step >= 2){
