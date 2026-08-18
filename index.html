@@ -19,6 +19,10 @@
     --ink:#10141C;--ink-2:#1A2130;--paper:#EEF1F6;--surface:#FFFFFF;
     --line:#E4E8F0;--text:#10141C;--muted:#616B7C; /* 4.75:1+ (KRDS 매직넘버50 충족, 구 #7C8698=3.67:1) */
     --primary:#2F6BFF;--amber:#FF9F1C;--success:#0FBF86;--danger:#FF3B5C;
+    /* ★ 3차 KRDS 점검(2026-08-18) — 텍스트·버튼 배경용 strong 토큰. 밝은 상태색은 점/아이콘 전용.
+       WCAG 산식 검증: 흰 텍스트/#087A54 5.35:1, 흰/#C81E3A 5.67:1, #C81E3A/연홍 tint 4.78:1,
+       #A35F00/연황 tint 4.52:1, #1F5BEB/#EAF0FF 4.90:1 */
+    --success-strong:#087A54;--danger-strong:#C81E3A;--amber-strong:#A35F00;--primary-text:#1F5BEB;
     --radius:22px;
     --font:'Pretendard',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic','Segoe UI',sans-serif;
   }
@@ -46,16 +50,16 @@
   .connbar.fail  .dot{background:var(--danger)}
   .connbar.wait{color:#8a6100}
   .connbar.ok{color:#087A54}
-  .connbar.fail{color:var(--danger);background:#FFF5F6;border-color:#FFD0D8}
+  .connbar.fail{color:var(--danger-strong);background:#FFF5F6;border-color:#FFD0D8}
 
   /* ★ 전체 초기화 버튼 (화면 밖) */
   .resetbar{display:flex;align-items:center;gap:10px;margin-bottom:20px}
   .resetbtn{display:flex;align-items:center;gap:8px;font-family:var(--font);
             font-size:12.5px;font-weight:800;letter-spacing:-.01em;cursor:pointer;
             padding:10px 18px;border-radius:999px;border:1px solid #FFD0D8;
-            background:#fff;color:var(--danger);transition:.15s;
+            background:#fff;color:var(--danger-strong);transition:.15s;
             box-shadow:0 12px 30px -18px rgba(16,20,28,.4)}
-  .resetbtn:hover{background:#FFF5F6;border-color:var(--danger)}
+  .resetbtn:hover{background:#FFF5F6;border-color:var(--danger-strong)}
   .resetbtn:active{transform:scale(.97)}
   .resetbtn:disabled{opacity:.45;cursor:not-allowed;background:#fff}
   .resetbtn .ri{font-size:14px;line-height:1}
@@ -72,7 +76,7 @@
   .logo{width:28px;height:28px;border-radius:9px;background:linear-gradient(135deg,var(--primary),#6C8FFF);display:flex;align-items:center;justify-content:center;box-shadow:0 5px 12px -4px rgba(47,107,255,.55)}
   .logo svg{width:14px;height:14px;transform:translate(-.5px,.5px)}
   .pagehead .h em{font-style:normal;background:linear-gradient(92deg,var(--primary),#7AA0FF);-webkit-background-clip:text;background-clip:text;color:transparent}
-  .badge{font-size:11px;font-weight:700;padding:5px 11px;border-radius:999px;background:#EAF0FF;color:var(--primary)}
+  .badge{font-size:11px;font-weight:700;padding:5px 11px;border-radius:999px;background:#EAF0FF;color:var(--primary-text)}
   .pagehead{padding:34px 22px 6px}
   .pagehead .h{font-size:26px;font-weight:800;letter-spacing:-.03em}
   .pagehead .s{font-size:13px;color:var(--muted);margin-top:4px}
@@ -109,17 +113,17 @@
   @keyframes scan{0%,100%{transform:translateY(0)}50%{transform:translateY(126px)}}
   .qr-hint{font-size:13px;color:var(--muted);margin-top:14px;line-height:1.5}
   .qr-hint b{color:var(--text)}
-  .altbtn{margin-top:14px;font-size:13px;font-weight:600;color:var(--primary);background:none;border:none;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+  .altbtn{margin-top:8px;min-height:44px;padding:12px 8px;font-size:13px;font-weight:600;color:var(--primary-text);background:none;border:none;cursor:pointer;text-decoration:underline;text-underline-offset:3px;font-family:var(--font)}
 
   /* ── 제스처 챌린지 (2차 인증) ─────────────── */
   .ges-note{font-size:13px;color:var(--muted);text-align:center;margin-bottom:14px;line-height:1.5}
   .ges-note b{color:var(--text)}
-  .ges-timer{margin-left:auto;font-size:12px;font-weight:800;color:var(--primary);background:#EAF0FF;padding:4px 11px;border-radius:999px;letter-spacing:0}
-  .ges-timer.warn{color:var(--danger);background:#FFF0F2;animation:pulse 1.4s infinite}
+  .ges-timer{margin-left:auto;font-size:12px;font-weight:800;color:var(--primary-text);background:#EAF0FF;padding:4px 11px;border-radius:999px;letter-spacing:0}
+  .ges-timer.warn{color:var(--danger-strong);background:#FFF0F2;animation:pulse 1.4s infinite}
   .ges-method{display:flex;align-items:flex-start;gap:13px;padding:14px;border:1px solid var(--line);border-radius:14px;margin-bottom:10px;background:#F9FAFD}
   .ges-method .gi{width:48px;height:48px;border-radius:13px;background:#fff;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:25px;flex-shrink:0}
   .ges-method .gt{min-width:0}
-  .ges-method .gt .gs{font-size:10.5px;font-weight:800;color:var(--primary);letter-spacing:.03em}
+  .ges-method .gt .gs{font-size:10.5px;font-weight:800;color:var(--primary-text);letter-spacing:.03em}
   .ges-method .gt .gl{font-size:15px;font-weight:800;letter-spacing:-.01em;margin-top:2px}
   .ges-method .gt .gd{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.5}
   .ges-method .gt .gr{font-size:11px;font-weight:700;color:var(--muted);margin-top:5px}
@@ -134,7 +138,7 @@
   .ges-cam .gc-badge i{width:6px;height:6px;border-radius:50%;background:var(--danger);animation:pulse 1.4s infinite}
   .ges-feedback{margin-top:10px;font-size:12.5px;font-weight:700;color:#8a6100;background:#FFF7E8;border:1px solid #FFE2AD;border-radius:11px;padding:10px 13px;text-align:center;line-height:1.5}
   .ges-feedback.ok{color:#087A54;background:rgba(15,191,134,.10);border-color:rgba(15,191,134,.35)}
-  .ges-feedback.bad{color:var(--danger);background:#FFF5F6;border-color:#FFD0D8}
+  .ges-feedback.bad{color:var(--danger-strong);background:#FFF5F6;border-color:#FFD0D8}
 
   .unlock-anim{display:flex;flex-direction:column;align-items:center;text-align:center;padding:6px 0}
   .ring{width:96px;height:96px;border-radius:50%;background:rgba(15,191,134,.12);display:flex;align-items:center;justify-content:center;margin-bottom:14px;animation:pop .5s cubic-bezier(.2,1.4,.4,1)}
@@ -148,10 +152,10 @@
   @keyframes flash{0%,100%{box-shadow:0 0 0 0 rgba(255,59,92,0)}50%{box-shadow:0 0 0 4px rgba(255,59,92,.18)}}
   .m-left .ml{font-size:11px;color:var(--muted);font-weight:600}
   .m-left .mv{font-size:22px;font-weight:800;letter-spacing:-.03em;margin-top:2px}
-  .m-left .mv.alert{color:var(--danger)}
+  .m-left .mv.alert{color:var(--danger-strong)}
   .pill{font-size:11px;font-weight:800;padding:6px 12px;border-radius:999px}
-  .pill.ok{background:rgba(15,191,134,.14);color:#087A54}
-  .pill.bad{background:rgba(255,59,92,.16);color:var(--danger)}
+  .pill.ok{background:rgba(15,191,134,.14);color:#076B49}
+  .pill.bad{background:rgba(200,30,58,.10);color:var(--danger-strong)}
   .wave{height:34px;width:78px;margin-top:6px}
 
   /* ── 실시간 지도 (배민식 추적) ─────────────────── */
@@ -186,12 +190,17 @@
   .cta{width:100%;border:none;border-radius:16px;padding:16px;font-size:15px;font-weight:800;cursor:pointer;font-family:var(--font);letter-spacing:-.01em;transition:.15s;color:#fff}
   .cta:active{transform:scale(.985)}
   .cta.primary{background:var(--primary)}
-  .cta.success{background:var(--success)}
+  .cta.success{background:var(--success-strong)}
   .cta.ghost{background:#fff;color:var(--text);border:1px solid var(--line)}
-  .cta.danger{background:var(--danger)}
+  .cta.danger{background:var(--danger-strong)}
   .cta:disabled{opacity:.4;cursor:not-allowed}
 
   .hidden{display:none!important}
+  /* ★ 3차 KRDS 점검 — 스크린 리더 전용 텍스트(KRDS 숨긴 콘텐츠), 입력 도움말, 움직임 감소 대응 */
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  .help{font-size:12px;color:var(--muted);margin-top:7px;line-height:1.5}
+  [role="button"]:focus-visible{outline:3px solid var(--primary);outline-offset:2px}
+  @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
   .fade{animation:fade .4s ease}
   @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
@@ -215,7 +224,7 @@
 
   .section-h{display:flex;align-items:center;justify-content:space-between;padding:22px 22px 10px}
   .section-h .t{font-size:14px;font-weight:800;letter-spacing:-.01em}
-  .section-h .a{font-size:12px;color:var(--primary);font-weight:700}
+  .section-h .a{font-size:12px;color:var(--primary-text);font-weight:700;background:none;border:none;font-family:var(--font);cursor:pointer;min-height:44px;padding:0 4px}
   .bigbtn{margin:6px 16px;background:#fff;border:1.5px dashed #C9D3E6;border-radius:var(--radius);padding:18px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:.15s}
   .bigbtn:active{transform:scale(.99)}
   .bigbtn .ic{width:46px;height:46px;border-radius:14px;background:#EAF0FF;color:var(--primary);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700}
@@ -229,14 +238,14 @@
   .histitem .meta .t{font-size:14px;font-weight:700;letter-spacing:-.01em}
   .histitem .meta .s{font-size:11.5px;color:var(--muted);margin-top:2px}
   .tag-done{font-size:10.5px;font-weight:700;color:#087A54;background:rgba(15,191,134,.13);padding:4px 9px;border-radius:999px}
-  .tag-live{font-size:10.5px;font-weight:700;color:var(--amber);background:rgba(255,159,28,.14);padding:4px 9px;border-radius:999px}
-  .tag-fail{font-size:10.5px;font-weight:700;color:var(--danger);background:rgba(255,59,92,.13);padding:4px 9px;border-radius:999px}
+  .tag-live{font-size:10.5px;font-weight:700;color:var(--amber-strong);background:rgba(255,159,28,.14);padding:4px 9px;border-radius:999px}
+  .tag-fail{font-size:10.5px;font-weight:700;color:var(--danger-strong);background:rgba(200,30,58,.10);padding:4px 9px;border-radius:999px}
 
   .field{padding:0 18px;margin-bottom:20px}
   .field .lbl{font-size:13px;font-weight:800;letter-spacing:-.01em;margin-bottom:11px}
   .chips{display:flex;flex-wrap:wrap;gap:8px}
   .chip{font-size:13px;font-weight:600;padding:10px 15px;border-radius:13px;border:1.5px solid var(--line);background:#fff;cursor:pointer;transition:.12s;color:#43506a}
-  .chip.on{border-color:var(--primary);background:#EAF0FF;color:var(--primary);font-weight:800}
+  .chip.on{border-color:var(--primary);background:#EAF0FF;color:var(--primary-text);font-weight:800}
   .seg{display:flex;gap:8px}
   .seg .chip{flex:1;text-align:center}
   .input{width:100%;border:1.5px solid var(--line);background:#fff;border-radius:13px;padding:13px 15px;font-size:14px;font-family:var(--font);color:var(--text);outline:none}
@@ -247,12 +256,12 @@
 
   .toast{position:absolute;left:50%;bottom:96px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;font-size:13px;font-weight:700;padding:13px 20px;border-radius:14px;opacity:0;transition:.35s;z-index:50;box-shadow:0 16px 40px -12px rgba(0,0,0,.5);pointer-events:none;max-width:88%;text-align:center;line-height:1.45}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-  .toast.err{background:var(--danger)}
+  .toast.err{background:var(--danger-strong)}
 
   .tabbar{position:absolute;bottom:0;left:0;right:0;height:72px;background:rgba(255,255,255,.92);backdrop-filter:blur(12px);border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-around;z-index:30;padding-bottom:6px}
   .tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10.5px;font-weight:700;color:var(--muted);cursor:pointer;background:none;border:none;font-family:var(--font);flex:1}
   .tab .ti{font-size:20px;line-height:1}
-  .tab.on{color:var(--primary)}
+  .tab.on{color:var(--primary-text)}
   .fab{width:54px;height:54px;border-radius:18px;background:var(--primary);color:#fff;border:none;font-size:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 10px 24px -8px rgba(47,107,255,.7);margin-top:-18px}
   .fab:active{transform:scale(.95)}
 </style>
@@ -309,19 +318,19 @@
         </div>
       </div>
       <div class="pagehead" style="padding-top:16px">
-        <div class="h">무엇을 <em>보낼까요?</em></div>
+        <h1 class="h" style="font-size:26px">무엇을 <em>보낼까요?</em></h1>
         <div class="s">로봇이 캠퍼스 어디든 배달해 드려요</div>
       </div>
 
       <div class="section-h"><span class="t">진행 중인 배송</span></div>
       <div id="activeWrap"></div>
 
-      <div class="bigbtn" id="newReqBtn">
+      <div class="bigbtn" id="newReqBtn" role="button" tabindex="0" aria-label="새 배송 요청 — 물품을 어디든 보내세요">
         <div class="ic">＋</div>
         <div class="tx"><div class="t">새 배송 요청</div><div class="s">물품을 어디든 보내세요</div></div>
       </div>
 
-      <div class="section-h"><span class="t">최근 내역</span><span class="a" id="clearHistBtn" style="cursor:pointer">내역 삭제</span></div>
+      <div class="section-h"><span class="t">최근 내역</span><button class="a" id="clearHistBtn" type="button">내역 삭제</button></div>
       <div id="histWrap"></div>
     </div>
 
@@ -329,12 +338,12 @@
     <div class="screen hidden" id="screenRequest">
       <div class="backrow">
         <button class="backbtn" data-go="screenHome">←</button>
-        <div><div style="font-size:19px;font-weight:800;letter-spacing:-.02em">새 배송 요청</div></div>
+        <div><h2 style="font-size:19px;font-weight:800;letter-spacing:-.02em">새 배송 요청</h2></div>
       </div>
 
       <div class="field" style="margin-top:18px">
-        <div class="lbl">무엇을 보내나요?</div>
-        <div class="chips" id="itemChips">
+        <div class="lbl" id="lblItem">무엇을 보내나요?</div>
+        <div class="chips" id="itemChips" role="group" aria-labelledby="lblItem">
           <button class="chip" data-v="행정 서류 봉투" data-ic="📄" aria-pressed="false">📄 행정 서류</button>
           <button class="chip" data-v="소형 택배" data-ic="📦" aria-pressed="false">📦 소형 택배</button>
           <button class="chip" data-v="실험 기자재" data-ic="🔬" aria-pressed="false">🔬 기자재</button>
@@ -343,22 +352,23 @@
       </div>
 
       <div class="field">
-        <div class="lbl">출발지</div>
-        <div class="chips" id="fromChips"></div>
+        <div class="lbl" id="lblFrom">출발지</div>
+        <div class="chips" id="fromChips" role="group" aria-labelledby="lblFrom"></div>
       </div>
 
       <div class="field">
-        <div class="lbl">도착지</div>
-        <div class="chips" id="toChips"></div>
+        <div class="lbl" id="lblTo">도착지</div>
+        <div class="chips" id="toChips" role="group" aria-labelledby="lblTo"></div>
       </div>
 
       <div class="field">
-        <div class="lbl">수령자</div>
-        <div class="seg" id="recvSeg">
+        <div class="lbl" id="lblRecv">수령자</div>
+        <div class="seg" id="recvSeg" role="group" aria-labelledby="lblRecv">
           <button class="chip on" data-v="self" aria-pressed="true">본인 수령</button>
           <button class="chip" data-v="other" aria-pressed="false">다른 사람</button>
         </div>
-        <input class="input" id="recvName" placeholder="수령자 이름" aria-label="수령자 이름" style="margin-top:10px;display:none">
+        <input class="input" id="recvName" placeholder="수령자 이름" aria-label="수령자 이름" aria-describedby="recvHelp" style="margin-top:10px;display:none">
+        <div class="help hidden" id="recvHelp">수령자 이름은 로봇 도착 시 수령 확인에만 사용되며, 배송 내역 삭제 시 함께 삭제됩니다.</div>
       </div>
 
       <div class="summary" id="summary" style="display:none">
@@ -377,7 +387,7 @@
     <div class="screen hidden" id="screenTrack">
       <div class="backrow">
         <button class="backbtn" data-go="screenHome">←</button>
-        <div style="flex:1"><div style="font-size:18px;font-weight:800;letter-spacing:-.02em">배송 추적</div></div>
+        <div style="flex:1"><h2 style="font-size:18px;font-weight:800;letter-spacing:-.02em">배송 추적</h2></div>
         <span class="badge" id="orderBadge">배송 #A-2317</span>
       </div>
 
@@ -386,7 +396,8 @@
         <div class="eyebrow" id="heroEye">실시간 배송</div>
         <h1 id="heroTitle">로봇이 오는 중</h1>
         <div class="sub" id="heroSub"></div>
-        <div class="steps">
+        <div class="steps" aria-label="배송 진행 단계">
+          <span class="sr-only" id="stepLive" role="status" aria-live="polite"></span>
           <div class="bar"></div><div class="bar-fill" id="barFill" style="width:0%"></div>
           <div class="step" data-s="0"><div class="dot"></div><div class="t">출발</div></div>
           <div class="step" data-s="1"><div class="dot"></div><div class="t">이동중</div></div>
@@ -483,8 +494,8 @@
           <div class="row"><span class="k">수령 시각</span><span class="v" id="recvTime">--:--</span></div>
         </div>
 
-        <div class="card hidden" id="cardTheft" style="border-color:#FFD0D8;background:#FFF5F6">
-          <div class="ttl" style="color:var(--danger)">🚨 도난 의심 알림</div>
+        <div class="card hidden" id="cardTheft" style="border-color:#FFD0D8;background:#FFF5F6" role="alert">
+          <div class="ttl" style="color:var(--danger-strong)">🚨 도난 의심 알림</div>
           <p style="font-size:13.5px;color:#9a2030;line-height:1.55">인증 없이 적재함의 하중이 <b>급감</b>했습니다. 관리자에게 자동 신고되었고, 로봇이 정지했습니다.</p>
           <button class="cta danger" style="margin-top:14px" id="resolveBtn">내가 꺼낸 게 맞아요 (오탐 해제)</button>
         </div>
@@ -570,6 +581,7 @@ let db = null, col = null;
 let localStep = null;          // null 이면 클라우드 state 를 따름
 let pinnedCloudStep = null;    // 로컬 고정 시점의 클라우드 단계 — 이후 실제 상태가 바뀌면 고정 자동 해제
 let localTheft = false;
+let lastAnnouncedStep = null;  // 스텝퍼 aria-live 중복 낭독 방지
 
 // ★ 테스트/실구현 모드 — 실구현에선 시연 컨트롤 숨김 + 로컬 오버라이드 금지.
 //   새로고침해도 유지되도록 localStorage 에 저장.
@@ -747,7 +759,8 @@ function renderHome(){
       ? (live.eta <= 0.5 ? '곧 도착' : `약 ${Math.round(live.eta)}분 뒤 도착`)
       : '경로 계산 중…';
 
-    aw.innerHTML = `<div class="activecard" data-open="${live.docId}">
+    aw.innerHTML = `<div class="activecard" data-open="${live.docId}" role="button" tabindex="0"
+      aria-label="진행 중인 배송 추적 화면 열기 — ${live.item}, ${routeText(live.from, live.to)}">
       <div class="ac-top"><div class="ac-live"><i></i>실시간 추적</div>
         <div class="ac-eta">${etaTxt}</div></div>
       <div class="ac-title">${live.ic} ${live.item}</div>
@@ -765,8 +778,8 @@ function renderHome(){
 
   const done = deliveries.filter(d => d.state === 'COMPLETED');
   $('histWrap').innerHTML = done.map(d => `
-    <div class="histitem" data-open="${d.docId}">
-      <div class="ic">${d.ic}</div>
+    <div class="histitem" data-open="${d.docId}" role="button" tabindex="0" aria-label="완료된 배송 — ${d.item}">
+      <div class="ic" aria-hidden="true">${d.ic}</div>
       <div class="meta"><div class="t">${d.item}</div>
         <div class="s">${routeText(d.from, d.to)} · ${d.time}</div></div>
       <span class="tag-done">완료</span>
@@ -775,8 +788,8 @@ function renderHome(){
   // 실패/거절 건도 보여준다 (조용히 사라지면 원인을 못 찾는다)
   const bad = deliveries.filter(d => d.state === 'FAILED' || d.state === 'REJECTED');
   $('histWrap').innerHTML += bad.map(d => `
-    <div class="histitem" data-open="${d.docId}">
-      <div class="ic">⚠️</div>
+    <div class="histitem" data-open="${d.docId}" role="button" tabindex="0" aria-label="${d.state === 'REJECTED' ? '거절' : '실패'}된 배송 — ${d.item}">
+      <div class="ic" aria-hidden="true">⚠️</div>
       <div class="meta"><div class="t">${d.item}</div>
         <div class="s">${d.error || d.state}</div></div>
       <span class="tag-fail">${d.state === 'REJECTED' ? '거절' : '실패'}</span>
@@ -859,7 +872,7 @@ async function submitReq(){
     go('screenHome');
   }catch(e){
     console.error('[Firestore] addDoc 실패', e);
-    toast('전송 실패: ' + (e.code || e.message), true);
+    toast('전송에 실패했어요. 네트워크를 확인한 뒤 다시 시도해 주세요.\n(코드: ' + (e.code || e.message) + ')', true);
   }finally{
     btn.textContent = '로봇 호출하기';
     validate();
@@ -987,6 +1000,8 @@ function ensureMap(){
   if(map){ setTiles(); return true; }
   if(typeof L === 'undefined') return false;   // CDN 로드 실패 시 조용히 스킵
   map = L.map('map', { zoomControl:false });
+  // Leaflet 기본 prefix("Leaflet" 링크 + 국기 이모지) 제거 — 타일 출처(© OSM / © CARTO) 표기는 약관상 유지
+  map.attributionControl.setPrefix('');
   setTiles();
   map.setView([37.4491, 126.6562], 17);        // 인하대 캠퍼스
   $('mapRecenter').onclick = fitRoute;
@@ -1147,6 +1162,7 @@ const DEMO_CHALLENGE = {
 
 let gesMode = false;                 // 제스처 인증 화면 진입 여부 (QR 카드와 교체 표시)
 let gesNonce = null, gesDeadline = 0, gesTimerInt = 0;
+let gesTimerNonce = null;            // 타이머를 시작한 챌린지 nonce (로봇 GESTURE_AUTH 전이 시점 기준)
 let gesCheckDone = {hand:false, pose:false};  // 단계별 인식 성공 래치 (새 챌린지에서 리셋)
 
 function stopGesTimer(){ clearInterval(gesTimerInt); gesTimerInt = 0; }
@@ -1214,7 +1230,7 @@ function renderGesture(d, step){
 
   $('cardGesture').classList.toggle('hidden', !vis);
   if(!vis){
-    stopGesTimer(); gesNonce = null;
+    stopGesTimer(); gesNonce = null; gesTimerNonce = null;
     gesCheckDone = {hand:false, pose:false};
     $('gesTimer').classList.add('hidden');
     return;
@@ -1232,16 +1248,28 @@ function renderGesture(d, step){
   $('gesPoseInst').textContent  = ch?.pose?.instruction || '';
   $('gesPoseRange').textContent = ch?.pose?.range_hint ? '📍 ' + ch.pose.range_hint : '';
 
-  // 카운트다운 — 새 nonce 수신 시점부터 timeout_sec 상대 계산
+  // 새 nonce 수신 → 체크 초기화 (타이머는 아래에서 로봇 단계에 맞춰 시작)
   if(ch && ch.nonce !== gesNonce){
-    gesNonce    = ch.nonce;
+    gesNonce = ch.nonce;
+    gesCheckDone = {hand:false, pose:false};
+    stopGesTimer(); gesTimerNonce = null;
+  }
+  // ★ 카운트다운 기준 시각 (DEF-04 대응): 로봇 인증 노드의 제한 시간은 GESTURE_AUTH 진입부터
+  //   흐르므로, 앱도 authState 가 GESTURE_AUTH 인 시점부터 timeout_sec 를 센다.
+  //   (QR 단계에서 사용자가 미리 제스처 화면을 열면 '⏱ 준비' 로 대기 표시)
+  //   실데이터가 없는 시연 모드(phase 없음)는 카드 표시 즉시 시작.
+  const timerShouldRun = ch && (phase === 'GESTURE_AUTH' || (!real && !phase));
+  if(timerShouldRun && gesTimerNonce !== ch.nonce){
+    gesTimerNonce = ch.nonce;
     gesDeadline = Date.now() + (Number(ch.timeout_sec) || 45) * 1000;
-    gesCheckDone = {hand:false, pose:false};   // 새 챌린지 → 체크 초기화
     stopGesTimer();
     gesTimerInt = setInterval(tickGesTimer, 250);
+    tickGesTimer();
   }
   $('gesTimer').classList.toggle('hidden', !ch);
-  if(ch) tickGesTimer();
+  if(ch && !timerShouldRun && gesTimerNonce !== ch.nonce){
+    $('gesTimer').textContent = '⏱ 준비'; $('gesTimer').classList.remove('warn');
+  }
 
   // 단계별 실시간 인식 체크 — detected(성공)=✓ 래치, confirming=인식 중 표시
   const fbLive = (d && d.authFeedback && typeof d.authFeedback === 'object')
@@ -1325,6 +1353,11 @@ function renderTrack(){
     $('etaNum').textContent = '-';
   }
 
+  // ★ 단계 전환을 스크린 리더에 1회 안내 (매 렌더 반복 낭독 방지)
+  if(step !== lastAnnouncedStep){
+    lastAnnouncedStep = step;
+    $('stepLive').textContent = `현재 단계 ${step + 1}/5 · ${['출발','이동중','도착','인증','수령완료'][step]} — ${h.t}`;
+  }
   $$('#screenTrack .step').forEach(s => {
     const i = +s.dataset.s;
     s.classList.toggle('done',   i < step);
@@ -1397,7 +1430,7 @@ async function completeDelivery(){
     toast('수령이 확인됐어요 ✅');
   }catch(e){
     console.error('[Firestore] 수령 확인 실패', e);
-    toast('수령 확인 실패: ' + (e.code || e.message), true);
+    toast('수령 확인을 저장하지 못했어요. 다시 시도해 주세요.\n(코드: ' + (e.code || e.message) + ')', true);
   }
 }
 
@@ -1440,7 +1473,7 @@ async function resetAll(){
     snap = await getDocs(col);
   }catch(e){
     console.error('[Firestore] 전체 조회 실패', e);
-    toast('조회 실패: ' + (e.code || e.message), true);
+    toast('데이터를 불러오지 못했어요. 잠시 후 다시 시도해 주세요.\n(코드: ' + (e.code || e.message) + ')', true);
     return;
   }
 
@@ -1519,6 +1552,14 @@ function bindEvents(){
 
   $('newReqBtn').onclick = () => go('screenRequest');
 
+  // ★ 키보드 사용 보장 (KRDS 버튼 접근성 04·06) — role=button 요소는 Enter/Space 로도 실행
+  document.body.addEventListener('keydown', e => {
+    if(e.key !== 'Enter' && e.key !== ' ') return;
+    const el = e.target.closest('[role="button"]');
+    if(!el || el.tagName === 'BUTTON') return;
+    e.preventDefault(); el.click();
+  });
+
   // 테스트/실구현 모드 토글
   $('modeSwitch').onclick = () => {
     demoUI = !demoUI;
@@ -1566,6 +1607,7 @@ function bindEvents(){
     syncPressed('#recvSeg', c);
     req.recv = c.dataset.v;
     $('recvName').style.display = (req.recv === 'other') ? 'block' : 'none';
+    $('recvHelp').classList.toggle('hidden', req.recv !== 'other');
     validate();
   });
 
