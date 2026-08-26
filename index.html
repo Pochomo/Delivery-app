@@ -1358,7 +1358,7 @@ function renderTrack(){
     $('heroEye').textContent   = '무결성 경보';
     $('heroTitle').textContent = '도난 발생 의심';
     $('heroSub').textContent   = '하중 급감 감지 · 로봇 정지 · 관리자 자동 신고';
-    $('etaLab').textContent    = '경보';
+    $('etaLab').textContent    = '';
   }else{
     $('heroEye').textContent   = h.eye;
     $('heroTitle').textContent = h.t;
@@ -1368,7 +1368,7 @@ function renderTrack(){
 
   // ETA — 클라우드 값 우선
   if(theft){
-    $('etaNum').textContent = '🚨';
+    $('etaNum').textContent = '';          // 도난 중엔 우상단 ETA 영역 비움 (경보는 히어로 문구로 충분)
   }else if(step >= 2){
     $('etaNum').textContent = step === 2 ? '0' : '✓';
   }else if(d && typeof d.eta === 'number'){
