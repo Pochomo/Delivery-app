@@ -1072,8 +1072,9 @@ function renderMap(d, step){
   const realRoute = d ? decodeRoute(d.route) : null;
   const route     = realRoute || (localStep !== null ? decodeRoute(DEMO_ROUTE) : null);
   const routeKey  = realRoute ? d.docId : '_demo_';
-  // 지도는 출발 준비~이동중에만. 도착 후엔 QR 인증이 주인공이라 지도는 숨김.
-  const visible   = step <= 1 && !!(route || (d && d.pos));
+  // 지도는 출발 준비~이동중에만. 도착 후엔 QR 인증, 도난 중엔 경보 카드가 주인공이라 숨김.
+  const theftNow  = localTheft || !!(d && d.theft);
+  const visible   = !theftNow && step <= 1 && !!(route || (d && d.pos));
   $('cardMap').classList.toggle('hidden', !visible);
 
   if(!visible){ stopDemo(); mapHidden = true; return; }
