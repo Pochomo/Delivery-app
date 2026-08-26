@@ -581,6 +581,7 @@ let localStep = null;          // null 이면 클라우드 state 를 따름
 let pinnedCloudStep = null;    // 로컬 고정 시점의 클라우드 단계 — 이후 실제 상태가 바뀌면 고정 자동 해제
 let localTheft = false;
 let lastAnnouncedStep = null;  // 스텝퍼 aria-live 중복 낭독 방지
+let lastTheftSeen = false;     // 도난 false→true 전이 감지 (추적 화면 자동 전환용)
 
 // ★ 테스트/실구현 모드 — 실구현에선 시연 컨트롤 숨김 + 로컬 오버라이드 금지.
 //   새로고침해도 유지되도록 localStorage 에 저장.
@@ -707,6 +708,16 @@ function initFirebase(){
       if(!activeDocId || !deliveries.some(d => d.docId === activeDocId)){
         activeDocId = live ? live.docId : null;
       }
+
+      // ★ 도난 의심 발생(false→true 전이) 시 어느 화면에 있든 추적 화면으로 자동 전환
+      const theftDoc = deliveries.find(d => d.theft && PROGRESS_STATES.concat('COMPLETED').includes(d.state));
+      const theftNow = !!theftDoc;
+      if(theftNow && !lastTheftSeen){
+        activeDocId = theftDoc.docId;
+        if($('screenTrack').classList.contains('hidden')) go('screenTrack');
+        toast('🚨 도난 의심이 감지됐어요', true);
+      }
+      lastTheftSeen = theftNow;
 
       renderHome();
       if(!$('screenTrack').classList.contains('hidden')) renderTrack();
@@ -1342,13 +1353,23 @@ function renderTrack(){
   const h = HERO[step];
 
   $('orderBadge').textContent = d ? '배송 ' + d.code : '배송 —';
-  $('heroEye').textContent   = h.eye;
-  $('heroTitle').textContent = h.t;
-  $('heroSub').textContent   = (step === 1 && d) ? routeText(d.from, d.to) : h.sub;
-  $('etaLab').textContent    = h.lab;
+  if(theft){
+    // ★ 도난 의심 중에는 단계 문구 대신 도난 상태를 최우선 표시
+    $('heroEye').textContent   = '무결성 경보';
+    $('heroTitle').textContent = '도난 발생 의심';
+    $('heroSub').textContent   = '하중 급감 감지 · 로봇 정지 · 관리자 자동 신고';
+    $('etaLab').textContent    = '경보';
+  }else{
+    $('heroEye').textContent   = h.eye;
+    $('heroTitle').textContent = h.t;
+    $('heroSub').textContent   = (step === 1 && d) ? routeText(d.from, d.to) : h.sub;
+    $('etaLab').textContent    = h.lab;
+  }
 
   // ETA — 클라우드 값 우선
-  if(step >= 2){
+  if(theft){
+    $('etaNum').textContent = '🚨';
+  }else if(step >= 2){
     $('etaNum').textContent = step === 2 ? '0' : '✓';
   }else if(d && typeof d.eta === 'number'){
     $('etaNum').textContent = Math.max(0, Math.round(d.eta));
@@ -1372,7 +1393,7 @@ function renderTrack(){
 
   show('cardQR',      step === 2 && !gesMode);   // 제스처 인증 선택 시 QR 카드와 교체
   show('cardUnlock',  step >= 3 && !theft);
-  show('cardMonitor', step >= 3);
+  show('cardMonitor', step >= 3 || theft);   // 도난 의심 중에는 단계와 무관하게 하중 표시
   show('cardReceipt', step === 4 && !theft);
   show('cardTheft',   theft);
   $('confirmBtn').style.display = (step === 3 && !theft) ? 'block' : 'none';
@@ -1662,8 +1683,18 @@ function bindEvents(){
     localStep = null; localTheft = false; gesMode = false; pinnedCloudStep = null;
     drawQR(); renderTrack();
   };
-  $('resolveBtn').onclick = () => {
-    localTheft = false; localStep = 4; pinCloud(); renderTrack();
+  $('resolveBtn').onclick = async () => {
+    localTheft = false;
+    const d = currentDoc();
+    if(d && d.theft && cloudReady){
+      try{ await updateDoc(doc(col, d.docId), { theft: false }); toast('오탐으로 해제했어요 — 주행을 계속합니다'); }
+      catch(e){ toast('해제 실패: ' + (e.code || e.message), true); }
+      localStep = null;            // 클라우드(로봇) 단계로 복귀 — 주행 중이면 '이동중'
+      pinnedCloudStep = null;
+    }else{
+      localStep = 1; pinCloud();   // 시연 모드: 주행 화면으로 복귀
+    }
+    renderTrack();
   };
 }
 
