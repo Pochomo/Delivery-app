@@ -984,15 +984,16 @@ const DEMO_ROUTE =
 
 /* 건물명 익명화 토글과 연동 —
    실제 이름 모드: OSM (건물·도로명 표시)
-   건물 A·B·C 모드: CARTO nolabels (글자가 아예 없는 타일) */
+   건물 A·B·C 모드: Esri 위성 타일 (라벨 없음 · API 키 불필요)
+   ※ CARTO nolabels 는 2026-08 키 필수화로 "API KEY REQUIRED" 워터마크가 떠서 교체 */
 function setTiles(){
   if(!map || tileAlias === useAlias) return;
   tileAlias = useAlias;
   if(baseTiles) baseTiles.remove();
   baseTiles = useAlias
-    ? L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager_nolabels/{z}/{x}/{y}{r}.png',
-        { maxZoom: 19, subdomains: 'abcd',
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/attributions">CARTO</a>' })
+    ? L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+        { maxZoom: 19,
+          attribution: '&copy; <a href="https://www.esri.com/">Esri</a>' })
     : L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
         { maxZoom: 19,
           attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>' });
