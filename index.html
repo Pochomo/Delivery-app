@@ -1122,7 +1122,8 @@ function renderMap(d, step){
 /* id → 아이콘 (표시 보조용. 모르는 id 가 와도 깨지지 않게 폴백 제공) */
 const GES_ICONS = {
   open_palm:'✋', fist:'✊', victory:'✌️', point:'☝️', thumbs_up:'👍',
-  both_hands_up:'🙌', left_hand_up:'🙋', right_hand_up:'🙋', t_pose:'🧍'
+  both_hands_up:'🙌', left_hand_up:'🙋', right_hand_up:'🙋', t_pose:'🧍',
+  full_body:'🧍'
 };
 
 /* /auth_feedback 의 wrong_gesture:ID 표기 전용 라벨 (계약서 6절 표 기준).
@@ -1130,7 +1131,8 @@ const GES_ICONS = {
 const GES_FB_LABELS = {
   open_palm:'손바닥 펴기', fist:'주먹 쥐기', victory:'브이 (V)',
   point:'검지 가리키기', thumbs_up:'엄지 척', both_hands_up:'양손 들기',
-  left_hand_up:'왼손 들기', right_hand_up:'오른손 들기', t_pose:'T자 자세'
+  left_hand_up:'왼손 들기', right_hand_up:'오른손 들기', t_pose:'T자 자세',
+  full_body:'전신 인증'
 };
 
 /* 인식기 reason → 한국어 안내 (로봇 describe_reason() 과 동일 규칙) */
@@ -1167,8 +1169,8 @@ const DEMO_CHALLENGE = {
   hand:{ id:'victory', label:'브이 (V)',
          instruction:'검지와 중지를 펴서 브이를 만들어 주세요.',
          range_hint:'카메라에서 약 0.4~1.5 m' },
-  pose:{ id:'both_hands_up', label:'양손 들기',
-         instruction:'양손을 머리 위로 들어 주세요.',
+  pose:{ id:'full_body', label:'전신 인증',
+         instruction:'뒤로 물러나 전신이 카메라에 모두 보이도록 서 주세요.',
          range_hint:'카메라에서 약 1~4 m — 전신이 보이도록' }
 };
 
